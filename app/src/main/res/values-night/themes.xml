@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.JBDNS" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/ocean_400</item>
+        <item name="colorOnPrimary">@color/ocean_900</item>
+        <item name="colorPrimaryContainer">@color/ocean_800</item>
+        <item name="colorOnPrimaryContainer">@color/ocean_100</item>
+        <item name="colorSecondary">@color/ocean_300</item>
+        <item name="colorOnSecondary">@color/ocean_900</item>
+        <item name="colorSecondaryContainer">@color/ocean_800</item>
+        <item name="colorOnSecondaryContainer">@color/ocean_100</item>
+        <item name="colorTertiary">@color/ocean_500</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="colorOnSurface">@color/on_surface_dark</item>
+        <item name="colorSurfaceVariant">@color/surface_variant_dark</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant_dark</item>
+        <item name="colorOutline">@color/outline_dark</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+        <item name="fontFamily">@font/vazirmatn</item>
+        <item name="android:fontFamily" tools:targetApi="21">@font/vazirmatn</item>
+    </style>
+
+    <style name="Theme.JBDNS.Splash" parent="Theme.JBDNS">
+        <item name="android:windowBackground">@color/ocean_900</item>
+    </style>
+
+</resources>

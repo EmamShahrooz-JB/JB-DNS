@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JB-DNS</string>
+    <string name="app_tagline">دی‌ان‌اس امن و پرسرعت</string>
+
+    <!-- تب‌ها -->
+    <string name="tab_home">خانه</string>
+    <string name="tab_servers">سرورها</string>
+    <string name="tab_logs">لاگ</string>
+    <string name="tab_settings">تنظیمات</string>
+
+    <!-- صفحهٔ خانه -->
+    <string name="home_status_off">تونل خاموش است</string>
+    <string name="home_status_on">متصل</string>
+    <string name="home_status_connecting">در حال اتصال…</string>
+    <string name="home_connect">اتصال</string>
+    <string name="home_disconnect">قطع اتصال</string>
+    <string name="home_active_server">سرور فعال</string>
+    <string name="home_protocol">پروتکل</string>
+    <string name="home_uptime">مدت اتصال</string>
+    <string name="home_queries">پرس‌وجوها</string>
+    <string name="home_blocked">مسدودشده</string>
+    <string name="home_cached">از حافظه</string>
+    <string name="home_errors">خطاها</string>
+    <string name="home_change_server">تغییر سرور</string>
+    <string name="home_speed_test">سنجش سرعت</string>
+    <string name="home_last_error">آخرین خطا</string>
+    <string name="home_hint_blocked">فهرست مسدودسازی داخلی فعال است</string>
+    <string name="home_hint_off">برای رمزنگاری پرس‌وجوهای DNS و دور زدن دستکاری ISP، تونل را روشن کنید.</string>
+    <string name="home_permission_needed">برای ساخت تونل DNS به تأیید شما نیاز داریم.</string>
+
+    <!-- سرورها -->
+    <string name="servers_title">سرورهای DNS</string>
+    <string name="servers_subtitle">یک سرور را انتخاب کنید؛ تغییر بلافاصله اعمال می‌شود</string>
+    <string name="servers_custom">سرور سفارشی</string>
+    <string name="servers_add">افزودن سرور</string>
+    <string name="servers_selected">فعال</string>
+    <string name="servers_bench">سنجش همه</string>
+    <string name="servers_bench_running">در حال سنجش…</string>
+    <string name="servers_bench_done">سنجش انجام شد</string>
+    <string name="servers_bench_failed">سنجش ناموفق</string>
+
+    <!-- برگهٔ جزئیات سرور -->
+    <string name="sheet_protocol">پروتکل</string>
+    <string name="sheet_address">نشانی</string>
+    <string name="sheet_note">توضیح</string>
+    <string name="sheet_benchmark">سنجش سرعت این سرور</string>
+    <string name="sheet_use">انتخاب این سرور</string>
+    <string name="sheet_delete">حذف سرور سفارشی</string>
+
+    <!-- افزودن سرور -->
+    <string name="custom_title">سرور سفارشی</string>
+    <string name="custom_name">نام</string>
+    <string name="custom_proto">پروتکل</string>
+    <string name="custom_address">نشانی</string>
+    <string name="custom_address_hint_doh">https://example.com/dns-query</string>
+    <string name="custom_address_hint_dot">dns.example.com</string>
+    <string name="custom_address_hint_dns">9.9.9.9 یا 9.9.9.9,149.112.112.112</string>
+    <string name="custom_save">ذخیره</string>
+    <string name="custom_cancel">انصراف</string>
+    <string name="custom_error_name">نام را وارد کنید</string>
+    <string name="custom_error_address">نشانی معتبر نیست</string>
+    <string name="custom_saved">سرور ذخیره شد</string>
+
+    <!-- لاگ -->
+    <string name="logs_title">لاگ زندهٔ DNS</string>
+    <string name="logs_empty">هنوز پرس‌وجویی ثبت نشده</string>
+    <string name="logs_off">ثبت لاگ در تنظیمات غیرفعال است</string>
+    <string name="logs_clear">پاک کردن</string>
+    <string name="logs_search">جست‌وجوی دامنه</string>
+    <string name="logs_filter_all">همه</string>
+    <string name="logs_filter_blocked">مسدود</string>
+    <string name="logs_filter_error">خطا</string>
+    <string name="logs_count">%1$d رکورد</string>
+
+    <!-- تنظیمات -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_appearance">ظاهر</string>
+    <string name="settings_theme">پوسته</string>
+    <string name="settings_theme_system">پیروی از سیستم</string>
+    <string name="settings_theme_light">روشن</string>
+    <string name="settings_theme_dark">تیره</string>
+    <string name="settings_privacy">حریم خصوصی و مسدودسازی</string>
+    <string name="settings_block_title">مسدودسازی تبلیغات و ردیاب‌ها</string>
+    <string name="settings_block_summary">فهرست داخلی دامنه‌های تبلیغاتی</string>
+    <string name="settings_sinkhole_title">حالت Sinkhole</string>
+    <string name="settings_sinkhole_summary">به‌جای NXDOMAIN، آی‌پی جعلی برگردان (سازگارتر با بعضی برنامه‌ها)</string>
+    <string name="settings_blocklist_title">دامنه‌های مسدود دلخواه</string>
+    <string name="settings_blocklist_summary">هر خط یک دامنه؛ زیردامنه‌ها هم مسدود می‌شوند</string>
+    <string name="settings_block_ipv6">مسدودسازی پرس‌وجوی IPv6</string>
+    <string name="settings_block_ipv6_summary">روی شبکه‌های بدون IPv6 پایدارتر است</string>
+    <string name="settings_connection">اتصال</string>
+    <string name="settings_verify_title">بررسی گواهی TLS</string>
+    <string name="settings_verify_summary">فقط برای سرورهای با گواهی خودامضا خاموش کنید</string>
+    <string name="settings_fallback_title">بازگشت به DNS ساده</string>
+    <string name="settings_fallback_summary">اگر DoH/DoT پاسخ نداد، از آی‌پی همان سرور استفاده شود</string>
+    <string name="settings_autostart_title">شروع خودکار پس از روشن شدن گوشی</string>
+    <string name="settings_logging">ثبت و آمار</string>
+    <string name="settings_log_title">ثبت پرس‌وجوها در لاگ</string>
+    <string name="settings_log_summary">فقط در حافظهٔ موقت و بدون ذخیرهٔ دائمی</string>
+    <string name="settings_reset_stats">بازنشانی آمار</string>
+    <string name="settings_about">درباره</string>
+    <string name="settings_version">نسخه</string>
+    <string name="settings_about_text">JB-DNS پرس‌وجوهای DNS گوشی شما را از طریق یک تونل محلی به سرور رمزنگاری‌شدهٔ دلخواهتان می‌فرستد. ترافیک دیگر دستگاه دست‌نخورده از مسیر اصلی عبور می‌کند.</string>
+
+    <!-- اعلان -->
+    <string name="notif_channel_name">تونل DNS</string>
+    <string name="notif_channel_desc">وضعیت اتصال JB-DNS</string>
+    <string name="notif_title">JB-DNS فعال است</string>
+    <string name="notif_text">%1$s از طریق %2$s</string>
+    <string name="notif_text_stats">%1$s از طریق %2$s · پرس‌وجوها: %3$d · مسدود: %4$d</string>
+    <string name="action_disconnect">قطع اتصال</string>
+    <string name="tile_on">JB-DNS • %1$s</string>
+
+    <!-- عمومی -->
+    <string name="ms_unit">%1$d میلی‌ثانیه</string>
+    <string name="ms_unknown">—</string>
+    <string name="ok">باشه</string>
+    <string name="copy">کپی</string>
+    <string name="copied">کپی شد</string>
+    <string name="blocked_label">مسدود</string>
+    <string name="cached_label">نهان</string>
+    <string name="error_label">خطا</string>
+    <string name="no_internet">اتصال اینترنت در دسترس نیست</string>
+</resources>

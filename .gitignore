@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# خروجی‌های بیلد — از Releases دانلود شوند
+*.apk
+*.aab
+
+# کلید امضا — هرگز کامیت نشود (راهنمای ساخت کلید: README)
+jbdns.keystore
+keystore.properties
+
+# پیکربندی محلی
+local.properties
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+
+# پیش‌نمایش‌های توسعه
+preview-*.html

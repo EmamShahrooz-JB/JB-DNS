@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ocean Blue Serenity -->
+    <color name="ocean_900">#03045E</color>
+    <color name="ocean_800">#023E8A</color>
+    <color name="ocean_700">#0077B6</color>
+    <color name="ocean_600">#0096C7</color>
+    <color name="ocean_500">#00B4D8</color>
+    <color name="ocean_400">#48CAE4</color>
+    <color name="ocean_300">#90E0EF</color>
+    <color name="ocean_200">#ADE8F4</color>
+    <color name="ocean_100">#CAF0F8</color>
+
+    <color name="surface_light">#F5FDFF</color>
+    <color name="surface_variant_light">#E1F4FA</color>
+    <color name="on_surface_light">#04122B</color>
+    <color name="on_surface_variant_light">#3D5A73</color>
+    <color name="outline_light">#9DC0D3</color>
+
+    <color name="surface_dark">#030820</color>
+    <color name="surface_container_dark">#071232</color>
+    <color name="surface_variant_dark">#0B1B3D</color>
+    <color name="on_surface_dark">#E4F5FB</color>
+    <color name="on_surface_variant_dark">#A8C6D8</color>
+    <color name="outline_dark">#1E3A5F</color>
+
+    <color name="ok_green">#2BB673</color>
+    <color name="warn_amber">#F2A93B</color>
+    <color name="danger_red">#E5484D</color>
+    <color name="white">#FFFFFF</color>
+</resources>
