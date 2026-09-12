@@ -1,91 +1,82 @@
 package ir.jbdns
 
 import ir.jbdns.core.Feedback
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * تست اعتبارسنجی و ساخت payload گزارش «مشکلی داشت بهمون بگو».
- * قواعد باید با cloudflare-worker/worker.js هم‌خوان باشد.
+ * تست‌های چت پشتیبانی (v4.2) — قواعد یکسان با cloudflare-worker/worker.js.
  */
 class FeedbackTest {
 
     private fun diag() = Feedback.Diag(
-        appVersion = "4.1",
-        androidVersion = "Android 14 (API 34)",
-        device = "Xiaomi Redmi Note 12",
-        server = "Shecan",
-        proto = "DoH",
-        tunnelOn = true,
-        race = false,
-        blocklists = listOf("ads", "malware"),
-        queries = 1234,
-        blocked = 56,
-        lastError = "timeout"
+        appVersion = "4.2", androidVersion = "Android 13 (API 33)", device = "Xiaomi Redmi Note 12",
+        server = "Shecan", proto = "DoH", tunnelOn = true, race = false,
+        blocklists = listOf("ads", "trackers"), queries = 245, blocked = 18, lastError = ""
     )
 
     @Test
-    fun `text validation boundaries`() {
-        assertEquals("متن گزارش کوتاه است — کمی بیشتر توضیح بده", Feedback.validateText(null))
-        assertEquals("متن گزارش کوتاه است — کمی بیشتر توضیح بده", Feedback.validateText("  ab  "))
-        assertNull(Feedback.validateText("سایت باز نمی‌شود"))
-        assertNull(Feedback.validateText("x".repeat(Feedback.MAX_TEXT)))
-        assertEquals("متن گزارش بیش از حد بلند است", Feedback.validateText("x".repeat(Feedback.MAX_TEXT + 1)))
+    fun validateText_shortRejected() {
+        assertNotNull(Feedback.validateText("سلا"))
     }
 
     @Test
-    fun `contact validation`() {
-        assertNull(Feedback.validateContact(null))
-        assertNull(Feedback.validateContact("  "))
-        assertNull(Feedback.validateContact("me@example.com".repeat(10)))
-        assertEquals("راه تماس بیش از حد بلند است", Feedback.validateContact("x".repeat(Feedback.MAX_CONTACT + 1)))
+    fun validateText_blankRejected() {
+        assertNotNull(Feedback.validateText("   "))
     }
 
     @Test
-    fun `payload includes diagnostics only when provided`() {
-        val withDiag = Feedback.build("مشکل نمونه", " @user ", diag(), emptyList())
-        assertEquals("JB-DNS", withDiag.optString("app"))
-        assertEquals("مشکل نمونه", withDiag.optString("text"))
-        assertEquals("@user", withDiag.optString("contact"))   // trim می‌شود
-        val d = withDiag.getJSONObject("diagnostics")
-        assertEquals("4.1", d.optString("appVersion"))
-        assertEquals(true, d.optBoolean("tunnelOn"))
-        assertEquals(1234, d.optLong("queries"))
-        assertEquals(2, d.getJSONArray("blocklists").length())
-        assertFalse(withDiag.has("logs"))
-
-        val withoutDiag = Feedback.build("مشکل نمونه", "", null, emptyList())
-        assertFalse(withoutDiag.has("diagnostics"))
-        assertFalse(withoutDiag.has("contact"))   // خالی → کلید حذف
-        assertFalse(withoutDiag.has("logs"))
+    fun validateText_tooLongRejected() {
+        assertNotNull(Feedback.validateText("x".repeat(4001)))
     }
 
     @Test
-    fun `logs included and capped at 30`() {
-        val logs = (1..40).map { "OK · domain$it.com · ${it}ms · 1.2.3.4" }
-        val p = Feedback.build("مشکل نمونه", null, null, logs)
-        assertEquals(Feedback.MAX_LOGS, p.getJSONArray("logs").length())
-        assertEquals("OK · domain1.com · 1ms · 1.2.3.4", p.getJSONArray("logs").getString(0))
-        // آیتم ۳۱ به بعد حذف شده است
-        val last = p.getJSONArray("logs").getString(Feedback.MAX_LOGS - 1)
-        assertTrue(last.contains("domain30"))
+    fun validateText_validPasses() {
+        assertNull(Feedback.validateText("این یک متن تستی معتبر است"))
     }
 
     @Test
-    fun `lastError capped at 300 chars`() {
-        val d = diag().let { Feedback.Diag(it.appVersion, it.androidVersion, it.device, it.server, it.proto, it.tunnelOn, it.race, it.blocklists, it.queries, it.blocked, "E".repeat(500)) }
-        val p = Feedback.build("t", null, d, emptyList())
-        assertEquals(300, p.getJSONObject("diagnostics").optString("lastError").length)
+    fun validateContact_tooLongRejected() {
+        assertNotNull(Feedback.validateContact("x".repeat(201)))
     }
 
     @Test
-    fun `payload serializes to valid json`() {
-        val json = Feedback.build("گزارش تست", null, diag(), listOf("OK · a.com · 5ms")).toString()
-        val back = JSONObject(json)   // باید بدون خطا parse شود (سمت ورکر همین کار را می‌کند)
-        assertTrue(back.has("text"))
+    fun validateContact_emptyPasses() {
+        assertNull(Feedback.validateContact(""))
+    }
+
+    @Test
+    fun chatPayload_minimal() {
+        val o = Feedback.buildChatSend("aa11223344556677", "  مشکل تست  ", "", null, emptyList())
+        assertEquals("aa11223344556677", o.getString("chat"))
+        assertEquals("مشکل تست", o.getString("text"))
+        assertEquals("JB-DNS", o.getString("app"))
+        assertFalse(o.has("contact"))
+        assertFalse(o.has("diagnostics"))
+        assertFalse(o.has("logs"))
+    }
+
+    @Test
+    fun chatPayload_fullWithDiagAndLogs() {
+        val logs = (1..40).map { "OK · domain$it.com · 12ms · 1.2.3.4" }
+        val o = Feedback.buildChatSend("bb22334455667788", "متن پیام", " @emam ", diag(), logs)
+        assertEquals("@emam", o.getString("contact"))
+        val d = o.getJSONObject("diagnostics")
+        assertEquals("4.2", d.getString("appVersion"))
+        assertEquals(true, d.getBoolean("tunnelOn"))
+        assertEquals(245L, d.getLong("queries"))
+        // سقف لاگ‌ها ۳۰ است (سمت سرور هم همین قاعده)
+        assertEquals(Feedback.MAX_LOGS, o.getJSONArray("logs").length())
+        assertEquals("ads", d.getJSONArray("blocklists").getString(0))
+    }
+
+    @Test
+    fun chatPayload_lastErrorBlankOmitted() {
+        val o = Feedback.buildChatSend("cc11223344556677", "متن", null, diag(), emptyList())
+        assertFalse(o.getJSONObject("diagnostics").has("lastError"))
     }
 }

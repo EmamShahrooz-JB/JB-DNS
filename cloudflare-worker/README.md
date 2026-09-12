@@ -1,27 +1,43 @@
-# 📮 JB-DNS Feedback Worker (D1)
+# 💬 JB-DNS Support Chat Worker (D1)
 
-گیرندهٔ گزارش‌های دکمهٔ **«JB-DNS مشکلی داشت بهمون بگو!»** در اپ اندروید.
-یک Cloudflare Worker با پایگاه‌دادهٔ **D1 (SQLite)** و صفحهٔ مدیریت فارسی.
+پشتیبان سرورِ **«گفتگو با پشتیبانی»** اپ JB-DNS (v4.2+) — چت دوطرفهٔ
+تلگرام‌مانند روی یک Cloudflare Worker با پایگاه‌دادهٔ **D1 (SQLite)**،
+به‌همراه پذیرش گزارش‌های فرمی نسخهٔ 4.1 (سازگاری با APKهای قدیمی).
 
 ## مسیرها
 
 | متد | مسیر | کار |
 |---|---|---|
 | `GET` | `/` | بررسی زنده‌بودن |
-| `POST` | `/report` | ثبت گزارش (محدودیت: ۵ گزارش در ساعت از هر IP) |
-| `GET` | `/list?t=TOKEN` | فهرست ۵۰ گزارش اخیر (مدیر) |
-| `GET` | `/one?id=…&t=TOKEN` | یک گزارش کامل (مدیر) |
-| `GET` | `/admin` | صفحهٔ مرور گزارش‌ها در مرورگر (توکن می‌پرسد) |
+| `POST` | `/chat/send` | پیام کاربر `{chat,text,contact?,diagnostics?,logs?}` (۳۰ پیام/ساعت/گفتگو) |
+| `GET` | `/chat/poll?c=…&after=…` | پیام‌های جدید کاربر + وضعیت خوانده‌شدن |
+| `GET` | `/chats?t=TOKEN` | فهرست گفتگوها (مدیر) |
+| `GET` | `/chat?id=…&t=TOKEN` | یک گفتگو کامل (مدیر — ✓✓ کاربر فعال می‌شود) |
+| `POST` | `/chat/reply?t=TOKEN` | پاسخ مدیر `{chat,text}` |
+| `POST` | `/report` | گزارش فرمی قدیمی v4.1 (۵ در ساعت از هر IP) |
+| `GET` | `/list?t=TOKEN` · `/one?id=…&t=TOKEN` | گزارش‌های قدیمی (مدیر) |
+| `GET` | `/admin` | پنل مدیریت تلگرام‌مانند (توکن می‌پرسد) |
 
 ## مدل داده (D1)
 
 ```sql
-CREATE TABLE reports (
+CREATE TABLE reports (  -- فرم v4.1
   id TEXT PRIMARY KEY, time TEXT NOT NULL, app TEXT, text TEXT NOT NULL,
   contact TEXT, diagnostics TEXT, logs TEXT, ua TEXT
 );
 CREATE INDEX idx_reports_time ON reports(time);
 CREATE TABLE rate_limit (key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE chats (     -- چت v4.2
+  id TEXT PRIMARY KEY, created TEXT NOT NULL, last_activity TEXT NOT NULL,
+  last_user TEXT, last_admin_view TEXT, contact TEXT, ua TEXT,
+  unread INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE messages (
+  id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, time TEXT NOT NULL,
+  sender TEXT NOT NULL,   -- 'user' | 'admin' | 'bot'
+  text TEXT NOT NULL, meta TEXT
+);
+CREATE INDEX idx_messages_chat ON messages(chat_id, time);
 ```
 
 - گزارش‌های قدیمی‌تر از **۹۰ روز** هنگام هر ثبت، خودکار حذف می‌شوند.

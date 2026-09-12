@@ -689,19 +689,20 @@ class MainActivity : AppCompatActivity() {
          * ورودی: {text, contact?, diag:boolean, logs:boolean}
          * نتیجه با window.__feedback به UI هل داده می‌شود.
          */
+        /** v4.2: ارسال پیام چت پشتیبانی — درخواست UI: {chat,text,contact,diag,logs} */
         @JavascriptInterface
-        fun sendFeedback(json: String): Boolean {
+        fun chatSend(json: String): Boolean {
             val o = runCatching { JSONObject(json) }.getOrNull() ?: run {
-                pushToJs("__feedback", feedbackError("قالب درخواست نامعتبر"))
+                pushToJs("__chatSend", feedbackError("قالب درخواست نامعتبر"))
                 return true
             }
             val text = o.optString("text")
-            Feedback.validateText(text)?.let { pushToJs("__feedback", feedbackError(it)); return true }
+            Feedback.validateText(text)?.let { pushToJs("__chatSend", feedbackError(it)); return true }
             val contact = o.optString("contact")
-            Feedback.validateContact(contact)?.let { pushToJs("__feedback", feedbackError(it)); return true }
+            Feedback.validateContact(contact)?.let { pushToJs("__chatSend", feedbackError(it)); return true }
 
             val server = prefs.activeServer()
-            // اطلاعات فنی فقط با رضایت کاربر (تیک «ارسال اطلاعات فنی»)
+            // اطلاعات فنی فقط با رضایت کاربر (تیک «📊 اطلاعات فنی»)
             val diag = if (o.optBoolean("diag", true)) Feedback.Diag(
                 appVersion = BuildConfig.VERSION_NAME,
                 androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
@@ -721,7 +722,7 @@ class MainActivity : AppCompatActivity() {
                     .map { "${it.status.name} · ${it.domain} · ${it.ms}ms · ${it.answer.take(60)}" }
             else emptyList()
 
-            val payload = Feedback.build(text, contact, diag, logs).toString()
+            val payload = Feedback.buildChatSend(o.optString("chat"), text, contact, diag, logs).toString()
             Thread({
                 try {
                     val client = OkHttpClient.Builder()
@@ -729,24 +730,54 @@ class MainActivity : AppCompatActivity() {
                         .readTimeout(15, TimeUnit.SECONDS)
                         .build()
                     val req = Request.Builder()
-                        .url(Feedback.ENDPOINT)
+                        .url(Feedback.CHAT_SEND)
                         .header("User-Agent", "JB-DNS/${BuildConfig.VERSION_NAME}")
                         .post(payload.toRequestBody("application/json".toMediaType()))
                         .build()
                     client.newCall(req).execute().use { resp ->
                         val body = resp.body?.string() ?: ""
-                        val r = runCatching { JSONObject(body) }.getOrNull()
-                        if (resp.isSuccessful && r?.optBoolean("ok") == true) {
-                            pushToJs("__feedback", JSONObject().apply {
-                                put("ok", true); put("id", r.optString("id"))
+                        val rr = runCatching { JSONObject(body) }.getOrNull()
+                        if (resp.isSuccessful && rr?.optBoolean("ok") == true) {
+                            pushToJs("__chatSend", JSONObject().apply {
+                                put("ok", true); put("id", rr.optString("id")); put("time", rr.optString("time"))
                             }.toString())
                         } else {
-                            pushToJs("__feedback",
-                                feedbackError(r?.optString("error") ?: "خطای سرور (HTTP ${resp.code})"))
+                            pushToJs("__chatSend",
+                                feedbackError(rr?.optString("error") ?: "خطای سرور (HTTP ${resp.code})"))
                         }
                     }
                 } catch (e: Exception) {
-                    pushToJs("__feedback", feedbackError("ارسال نشد: ${e.message ?: "خطای شبکه"}"))
+                    pushToJs("__chatSend", feedbackError("ارسال نشد: ${e.message ?: "خطای شبکه"}"))
+                }
+            }, "jb-dns-feedback").start()
+            return true
+        }
+
+        /** v4.2: دریافت پیام‌های جدید چت (poll) — نتیجه با window.__chatPoll به UI هل داده می‌شود. */
+        @JavascriptInterface
+        fun chatPoll(chat: String, after: String): Boolean {
+            if (chat.isBlank()) return false
+            val url = Feedback.CHAT_POLL +
+                "?c=" + android.net.Uri.encode(chat) +
+                "&after=" + android.net.Uri.encode(after)
+            Thread({
+                try {
+                    val client = OkHttpClient.Builder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(15, TimeUnit.SECONDS)
+                        .build()
+                    val req = Request.Builder()
+                        .url(url)
+                        .header("User-Agent", "JB-DNS/${BuildConfig.VERSION_NAME}")
+                        .get()
+                        .build()
+                    client.newCall(req).execute().use { resp ->
+                        val body = resp.body?.string() ?: ""
+                        val rr = runCatching { JSONObject(body) }.getOrNull()
+                        pushToJs("__chatPoll", rr?.toString() ?: """{"ok":false,"error":"پاسخ سرور نامعتبر"}""")
+                    }
+                } catch (e: Exception) {
+                    pushToJs("__chatPoll", feedbackError("دریافت نشد: ${e.message ?: "خطای شبکه"}"))
                 }
             }, "jb-dns-feedback").start()
             return true
