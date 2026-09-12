@@ -1,0 +1,16 @@
+# تنظیمات دیپلوی JB-DNS Feedback Worker (D1)
+# راهنمای کامل: cloudflare-worker/README.md
+
+name = "jbdns-feedback"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+# پایگاه‌دادهٔ D1 — ساخته‌شده:
+#   wrangler d1 create jbdns-feedback
+[[d1_databases]]
+binding = "DB"
+database_name = "jbdns-feedback"
+database_id = "4b1e4228-8db3-4648-90db-8390cdaf8028"
+
+# ADMIN_TOKEN را به‌عنوان secret بگذارید (هرگز داخل فایل نوشته نشود):
+#   wrangler secret put ADMIN_TOKEN

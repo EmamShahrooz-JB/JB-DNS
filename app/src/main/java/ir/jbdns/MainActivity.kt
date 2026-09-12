@@ -21,6 +21,7 @@ import ir.jbdns.core.BlockList
 import ir.jbdns.core.BlocklistCatalog
 import ir.jbdns.core.BackupData
 import ir.jbdns.core.Dns
+import ir.jbdns.core.Feedback
 import ir.jbdns.core.HealthCheck
 import ir.jbdns.core.RemoteBlocklist
 import ir.jbdns.core.SettingsBackup
@@ -36,6 +37,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -672,6 +677,80 @@ class MainActivity : AppCompatActivity() {
             runCatching { importFile.launch(arrayOf("*/*")) }
         }
 
+
+        // ------------------------------------------------ گزارش مشکل (v4.1)
+
+        /** خطای استاندارد برای UI گزارش. */
+        private fun feedbackError(msg: String): String =
+            JSONObject().apply { put("ok", false); put("error", msg) }.toString()
+
+        /**
+         * ارسال گزارش «JB-DNS مشکلی داشت بهمون بگو!» به ورکر کلاودفلر.
+         * ورودی: {text, contact?, diag:boolean, logs:boolean}
+         * نتیجه با window.__feedback به UI هل داده می‌شود.
+         */
+        @JavascriptInterface
+        fun sendFeedback(json: String): Boolean {
+            val o = runCatching { JSONObject(json) }.getOrNull() ?: run {
+                pushToJs("__feedback", feedbackError("قالب درخواست نامعتبر"))
+                return true
+            }
+            val text = o.optString("text")
+            Feedback.validateText(text)?.let { pushToJs("__feedback", feedbackError(it)); return true }
+            val contact = o.optString("contact")
+            Feedback.validateContact(contact)?.let { pushToJs("__feedback", feedbackError(it)); return true }
+
+            val server = prefs.activeServer()
+            // اطلاعات فنی فقط با رضایت کاربر (تیک «ارسال اطلاعات فنی»)
+            val diag = if (o.optBoolean("diag", true)) Feedback.Diag(
+                appVersion = BuildConfig.VERSION_NAME,
+                androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+                device = "${Build.MANUFACTURER} ${Build.MODEL}",
+                server = server.name,
+                proto = prefs.effectiveProto(server).short,
+                tunnelOn = DnsVpnService.isTunnelRunning,
+                race = prefs.raceMode,
+                blocklists = prefs.catalogEnabled().toList(),
+                queries = VpnStats.totalQueries,
+                blocked = VpnStats.totalBlocked,
+                lastError = VpnStats.lastError
+            ) else null
+            // لاگ‌ها به‌صورت پیش‌فرض خاموش‌اند (دامنه‌ها حساس‌اند)
+            val logs = if (o.optBoolean("logs", false))
+                VpnStats.snapshot().take(20)
+                    .map { "${it.status.name} · ${it.domain} · ${it.ms}ms · ${it.answer.take(60)}" }
+            else emptyList()
+
+            val payload = Feedback.build(text, contact, diag, logs).toString()
+            Thread({
+                try {
+                    val client = OkHttpClient.Builder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(15, TimeUnit.SECONDS)
+                        .build()
+                    val req = Request.Builder()
+                        .url(Feedback.ENDPOINT)
+                        .header("User-Agent", "JB-DNS/${BuildConfig.VERSION_NAME}")
+                        .post(payload.toRequestBody("application/json".toMediaType()))
+                        .build()
+                    client.newCall(req).execute().use { resp ->
+                        val body = resp.body?.string() ?: ""
+                        val r = runCatching { JSONObject(body) }.getOrNull()
+                        if (resp.isSuccessful && r?.optBoolean("ok") == true) {
+                            pushToJs("__feedback", JSONObject().apply {
+                                put("ok", true); put("id", r.optString("id"))
+                            }.toString())
+                        } else {
+                            pushToJs("__feedback",
+                                feedbackError(r?.optString("error") ?: "خطای سرور (HTTP ${resp.code})"))
+                        }
+                    }
+                } catch (e: Exception) {
+                    pushToJs("__feedback", feedbackError("ارسال نشد: ${e.message ?: "خطای شبکه"}"))
+                }
+            }, "jb-dns-feedback").start()
+            return true
+        }
 
         /** سنجش واقعی یک سرور؛ نتیجه با window.__bench به UI هل داده می‌شود. */
         @JavascriptInterface

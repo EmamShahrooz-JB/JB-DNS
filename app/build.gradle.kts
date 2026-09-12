@@ -13,8 +13,8 @@ android {
         applicationId = "ir.jbdns"
         minSdk = 24
         targetSdk = 34
-        versionCode = 14
-        versionName = "4.0"
+        versionCode = 15
+        versionName = "4.1"
         resourceConfigurations += listOf("fa", "en")
     }
 
