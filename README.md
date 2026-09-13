@@ -334,6 +334,6 @@ v1–2 (پایه‌گذاری)
 ---
 
 <p align="center">
-  ساخته‌شده با ❤ توسط <a href="https://github.com/EmamShahrooz-JB"><b>EmamShahroozJB</b></a><br>
+  Developed By <a href="https://github.com/EmamShahrooz-JB"><b>EmamShahroozJB</b></a><br>
   <sub>اگر پروژه برایتان مفید بود، یک ⭐ بدهید!</sub>
 </p>
