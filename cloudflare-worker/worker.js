@@ -448,6 +448,43 @@ body{margin:0;font-family:Vazirmatn,'Segoe UI',Tahoma,sans-serif;background:var(
 .sel{appearance:none;width:100%;padding:12px 16px;border-radius:14px;border:1.5px solid var(--color-border);
   background:var(--color-surface2);color:var(--color-text);font-family:inherit;font-size:13.5px;font-weight:700;outline:none;cursor:pointer}
 .lbl{display:block;font-size:13px;font-weight:800;color:var(--color-text-muted);margin:0 4px 7px}
+/* ───── دراپ‌داون سفارشی ───── */
+.dd{position:relative}
+.dd-trigger{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border-radius:14px;
+  border:1.5px solid var(--color-border);background:var(--color-surface2);color:var(--color-text);
+  font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;transition:.2s;text-align:start}
+.dd-trigger:hover{border-color:var(--color-primary)}
+.dd.open .dd-trigger{border-color:var(--color-primary);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--color-primary) 18%,transparent)}
+.dd-label{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-chev{width:17px;height:17px;flex-shrink:0;color:var(--color-text-muted);transition:transform .25s}
+.dd.open .dd-chev{transform:rotate(180deg)}
+.dd-swatch{width:19px;height:19px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--sw,#6366f1),color-mix(in srgb,var(--sw,#6366f1) 55%,#000));
+  box-shadow:0 2px 8px color-mix(in srgb,var(--sw,#6366f1) 45%,transparent)}
+.dd-ico{width:19px;height:19px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:900;background:var(--color-surface);border:1px solid var(--color-border)}
+.dd-menu{position:absolute;top:calc(100% + 8px);inset-inline:0;z-index:45;padding:6px;
+  background:color-mix(in srgb,var(--color-surface) 88%,transparent);backdrop-filter:blur(16px);
+  border:1px solid var(--color-border);border-radius:16px;
+  box-shadow:0 18px 50px rgba(0,0,0,.30),0 2px 8px rgba(0,0,0,.14);
+  opacity:0;transform:scale(.9) translateY(-8px);pointer-events:none;transform-origin:top center;
+  transition:opacity .2s ease,transform .26s cubic-bezier(.34,1.56,.64,1)}
+.dd.open .dd-menu{opacity:1;transform:none;pointer-events:auto}
+.dd-item{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;border-radius:11px;
+  background:none;color:var(--color-text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  text-align:start;transition:background .15s}
+.dd-item:hover{background:color-mix(in srgb,var(--color-primary) 10%,transparent)}
+.dd-item .dd-txt{flex:1;min-width:0}
+.dd-check{width:15px;height:15px;flex-shrink:0;color:var(--color-primary);opacity:0;transform:scale(.4);transition:.2s}
+.dd-item.on{color:var(--color-primary)}
+.dd-item.on .dd-check{opacity:1;transform:none}
+.dd.open .dd-item{animation:ddItem .28s both}
+.dd.open .dd-item:nth-child(2){animation-delay:.035s}
+.dd.open .dd-item:nth-child(3){animation-delay:.07s}
+.dd.open .dd-item:nth-child(4){animation-delay:.105s}
+.dd.open .dd-item:nth-child(5){animation-delay:.14s}
+@keyframes ddItem{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .field{margin-bottom:18px}
 /* ───── layout ───── */
 .app{display:none;height:100vh;height:100dvh;width:100%}
@@ -711,24 +748,33 @@ body{margin:0;font-family:Vazirmatn,'Segoe UI',Tahoma,sans-serif;background:var(
         <div class="card" style="margin-top:0">
           <div class="card-hd"><h3 data-i18n="tab_settings">تنظیمات</h3></div>
           <div style="padding:18px">
-            <div class="field"><label class="lbl" data-i18n="s_theme">قالب رنگی</label>
-              <select class="sel" id="theme-selector" onchange="setThemeVariant(this.value)">
-                <option value="default">Default (Indigo)</option>
-                <option value="ocean">Ocean Blue</option>
-                <option value="forest">Forest Green</option>
-                <option value="sunset">Sunset Rose</option>
-                <option value="dracula">Dracula (Dark)</option>
-              </select></div>
+                        <div class="field"><label class="lbl" data-i18n="s_theme">قالب رنگی</label>
+              <div class="dd" id="dd-theme">
+                <button type="button" class="dd-trigger" data-dd="theme" aria-haspopup="listbox">
+                  <span class="dd-swatch" id="dd-theme-dot"></span>
+                  <span class="dd-label" id="dd-theme-label">—</span>
+                  <svg class="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div class="dd-menu" id="dd-theme-menu" role="listbox"></div>
+              </div></div>
             <div class="field"><label class="lbl" data-i18n="s_mode">حالت نمایش</label>
-              <select class="sel" id="mode-selector" onchange="setMode(this.value)">
-                <option value="dark">🌙 Dark</option>
-                <option value="light">☀️ Light</option>
-              </select></div>
+              <div class="dd" id="dd-mode">
+                <button type="button" class="dd-trigger" data-dd="mode" aria-haspopup="listbox">
+                  <span class="dd-ico" id="dd-mode-ico">🌙</span>
+                  <span class="dd-label" id="dd-mode-label">—</span>
+                  <svg class="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div class="dd-menu" id="dd-mode-menu" role="listbox"></div>
+              </div></div>
             <div class="field"><label class="lbl" data-i18n="s_lang">زبان</label>
-              <select class="sel" id="lang-selector" onchange="setLang(this.value)">
-                <option value="fa">فارسی</option>
-                <option value="en">English</option>
-              </select></div>
+              <div class="dd" id="dd-lang">
+                <button type="button" class="dd-trigger" data-dd="lang" aria-haspopup="listbox">
+                  <span class="dd-ico" id="dd-lang-ico">فا</span>
+                  <span class="dd-label" id="dd-lang-label">—</span>
+                  <svg class="dd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div class="dd-menu" id="dd-lang-menu" role="listbox"></div>
+              </div></div>
           </div>
         </div>
         <div class="card">
@@ -815,7 +861,7 @@ var I18N = {
     ov_chats:"گفتگوها", ov_today:"پیام امروز", ov_unread:"خوانده‌نشده", ov_msgs:"مجموع پیام‌ها", ov_reports:"گزارش‌های قدیمی",
     recent_chats:"آخرین گفتگوها", h_status:"وضعیت", h_version:"نسخهٔ ورکر", h_storage:"پایگاه‌داده", h_time:"زمان سرور",
     h_recheck:"بررسی مجدد", s_theme:"قالب رنگی", s_mode:"حالت نمایش", s_lang:"زبان", s_session:"نشست مدیریت",
-    s_key:"کلید فعلی", s_expiry:"اعتبار تا", close:"بستن", send:"ارسال", search_ph:"جستجوی شناسه/متن…",
+    s_key:"کلید فعلی", s_expiry:"اعتبار تا", close:"بستن", send:"ارسال", applied:"اعمال شد ✓", search_ph:"جستجوی شناسه/متن…",
     reply_ph:"پاسخ خود را بنویس…", empty_chats:"هنوز گفتگویی شروع نشده", empty_rep:"گزارشی ثبت نشده",
     online_lbl:"زنده", sent:"پاسخ ارسال شد ✓", err:"خطا", wrong:"دسترسی مسدود شد",
     hp_what_t:"این پنل چیست؟",
@@ -830,7 +876,7 @@ var I18N = {
     ov_chats:"Chats", ov_today:"Msgs Today", ov_unread:"Unread", ov_msgs:"Total Messages", ov_reports:"Legacy Reports",
     recent_chats:"Recent Conversations", h_status:"Status", h_version:"Worker Version", h_storage:"Storage", h_time:"Server Time",
     h_recheck:"Re-check", s_theme:"Display Theme", s_mode:"Appearance", s_lang:"Language", s_session:"Admin Session",
-    s_key:"Current key", s_expiry:"Valid until", close:"Close", send:"Send", search_ph:"Search id/text…",
+    s_key:"Current key", s_expiry:"Valid until", close:"Close", send:"Send", applied:"Applied ✓", search_ph:"Search id/text…",
     reply_ph:"Type your reply…", empty_chats:"No conversations yet", empty_rep:"No reports",
     online_lbl:"Online", sent:"Reply sent ✓", err:"Error", wrong:"Access Denied",
     hp_what_t:"What is this panel?",
@@ -878,7 +924,7 @@ function applyI18n(){
   var els = document.querySelectorAll("[data-i18n]");
   for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute("data-i18n"));
   $("view-title").textContent = t("tab_" + CUR);
-  $("lang-selector").value = LANG;
+  syncDD();
 }
 function toggleLang(){ setLang(LANG === "fa" ? "en" : "fa"); }
 function setLang(l){ LANG = l; LS.set("jb_admin_lang", l); applyI18n(); renderChats(); renderStats(); }
@@ -888,7 +934,7 @@ function setThemeVariant(v){
   if (v === "default") document.documentElement.removeAttribute("data-theme");
   else document.documentElement.setAttribute("data-theme", v);
   LS.set("jb_admin_theme", v);
-  if (v === "dracula") { setMode("dark"); $("mode-selector").value = "dark"; }
+  if (v === "dracula") setMode("dark");
 }
 function setMode(m){
   document.documentElement.classList.toggle("dark", m === "dark");
@@ -899,7 +945,6 @@ function setMode(m){
 function loadThemePrefs(){
   var th = LS.get("jb_admin_theme") || "default";
   var md = LS.get("jb_admin_mode") || "dark";
-  $("theme-selector").value = th; $("mode-selector").value = md;
   setThemeVariant(th); setMode(md);
 }
 
@@ -1125,13 +1170,108 @@ function loadFeed(){
   });
 }
 
+/* ---------- دراپ‌داون‌های سفارشی ---------- */
+var DD_DATA = {
+  theme: {
+    items: [
+      { v: "default", sw: "#6366f1", en: "Default (Indigo)" },
+      { v: "ocean", sw: "#0ea5e9", en: "Ocean Blue" },
+      { v: "forest", sw: "#10b981", en: "Forest Green" },
+      { v: "sunset", sw: "#f43f5e", en: "Sunset Rose" },
+      { v: "dracula", sw: "#bd93f9", en: "Dracula (Dark)" }
+    ],
+    get: function(){ return LS.get("jb_admin_theme") || "default"; },
+    set: function(v){ setThemeVariant(v); }
+  },
+  mode: {
+    items: [
+      { v: "dark", ic: "🌙", fa: "تاریک", en: "Dark" },
+      { v: "light", ic: "☀️", fa: "روشن", en: "Light" }
+    ],
+    get: function(){ return LS.get("jb_admin_mode") || "dark"; },
+    set: function(v){ setMode(v); }
+  },
+  lang: {
+    items: [
+      { v: "fa", ic: "فا", fa: "فارسی", en: "فارسی" },
+      { v: "en", ic: "En", fa: "English", en: "English" }
+    ],
+    get: function(){ return LANG; },
+    set: function(v){ setLang(v); }
+  }
+};
+function ddLabel(id, it){ return id === "theme" ? it.en : (LANG === "fa" ? it.fa : it.en); }
+function buildDD(){
+  var hosts = { theme: "dd-theme-menu", mode: "dd-mode-menu", lang: "dd-lang-menu" };
+  Object.keys(DD_DATA).forEach(function(id){
+    var host = $(hosts[id]); if (!host) return;
+    var h = "";
+    DD_DATA[id].items.forEach(function(it){
+      var ic = it.sw
+        ? '<span class="dd-swatch" style="--sw:' + it.sw + '"></span>'
+        : '<span class="dd-ico">' + it.ic + '</span>';
+      h += '<button type="button" class="dd-item" role="option" id="dd-' + id + '-item-' + it.v + '" data-dd="' + id + '" data-v="' + it.v + '">'
+        + ic + '<span class="dd-txt">' + ddLabel(id, it) + '</span>'
+        + '<svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>'
+        + '</button>';
+    });
+    host.innerHTML = h;
+  });
+}
+function syncDD(){
+  Object.keys(DD_DATA).forEach(function(id){
+    var v = DD_DATA[id].get();
+    var cur = null;
+    for (var i = 0; i < DD_DATA[id].items.length; i++)
+      if (DD_DATA[id].items[i].v === v) cur = DD_DATA[id].items[i];
+    if (!cur) return;
+    var lbl = $("dd-" + id + "-label"); if (lbl) lbl.textContent = ddLabel(id, cur);
+    if (id === "theme") { var dot = $("dd-theme-dot"); if (dot) dot.style.setProperty("--sw", cur.sw); }
+    if (id === "mode") { var mi = $("dd-mode-ico"); if (mi) mi.textContent = cur.ic; }
+    if (id === "lang") { var li = $("dd-lang-ico"); if (li) li.textContent = cur.ic; }
+    for (var j = 0; j < DD_DATA[id].items.length; j++) {
+      var el = $("dd-" + id + "-item-" + DD_DATA[id].items[j].v);
+      if (el) el.classList.toggle("on", DD_DATA[id].items[j].v === v);
+    }
+  });
+}
+function closeAllDD(except){
+  ["theme", "mode", "lang"].forEach(function(id){
+    if (id === except) return;
+    var w = $("dd-" + id); if (w) w.classList.remove("open");
+  });
+}
+function toggleDD(id){
+  var w = $("dd-" + id);
+  var open = w.classList.contains("open");
+  closeAllDD();
+  if (!open) w.classList.add("open");
+}
+function pickDD(id, v){
+  closeAllDD();
+  DD_DATA[id].set(v);
+  syncDD();
+  toast(t("applied"));
+}
+
 /* ---------- boot ---------- */
+buildDD();
 loadThemePrefs();
 applyI18n();
 $("pwd").addEventListener("keydown", function(e){ if (e.key === "Enter") doLogin(false); });
 $("cm-in").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } });
 document.getElementById("chat-modal").addEventListener("click", function(e){ if (e.target === this) closeChat(); });
 document.getElementById("rep-modal").addEventListener("click", function(e){ if (e.target === this) e.target.classList.remove("on"); });
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if (!el || !el.closest) return;
+  var item = el.closest(".dd-item");
+  if (item) { pickDD(item.getAttribute("data-dd"), item.getAttribute("data-v")); return; }
+  var trig = el.closest(".dd-trigger");
+  if (trig) { toggleDD(trig.getAttribute("data-dd")); return; }
+  if (!el.closest(".dd")) closeAllDD();
+});
+document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeAllDD(); });
 var sess = null;
 try { sess = JSON.parse(LS.get("jb_admin") || "null"); } catch(e){}
 if (sess && sess.key && sess.expiry > Date.now()) { sessionKey = sess.key; doLogin(true); }
