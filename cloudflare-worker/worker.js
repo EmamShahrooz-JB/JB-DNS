@@ -802,6 +802,11 @@ body{margin:0;font-family:Vazirmatn,'Segoe UI',Tahoma,sans-serif;background:var(
 <div class="toast" id="toast"></div>
 
 <script>
+/* حافظهٔ امن — در iframeهای sandbox شده localStorage خطا می‌دهد؛ فال‌بک حافظه‌ای */
+var LS = { _m:{},
+  get: function(k){ try { return localStorage.getItem(k); } catch(e){ return (k in this._m) ? this._m[k] : null; } },
+  set: function(k,v){ try { localStorage.setItem(k,v); } catch(e){ this._m[k] = String(v); } },
+  del: function(k){ try { localStorage.removeItem(k); } catch(e){ delete this._m[k]; } } };
 /* ---------- i18n ---------- */
 var I18N = {
   fa: { title:"پنل پشتیبانی JB-DNS", online:"سیستم فعال است", pass_ph:"کلید مدیریت", login_btn:"ورود به سیستم",
@@ -835,7 +840,7 @@ var I18N = {
     hp_priv_t:"Privacy",
     hp_priv:"User IPs are never stored raw (only a hash for rate-limiting); chats and reports auto-delete after 90 days." }
 };
-var LANG = localStorage.getItem("jb_admin_lang") || "fa";
+var LANG = LS.get("jb_admin_lang") || "fa";
 var TABS = ["overview","chats","reports","network","logs","settings","help"];
 var CUR = "overview", CHATS = [], CURCHAT = null, MODAL_TIMER = null, REFRESH_TIMER = null;
 
@@ -876,24 +881,24 @@ function applyI18n(){
   $("lang-selector").value = LANG;
 }
 function toggleLang(){ setLang(LANG === "fa" ? "en" : "fa"); }
-function setLang(l){ LANG = l; localStorage.setItem("jb_admin_lang", l); applyI18n(); renderChats(); renderStats(); }
+function setLang(l){ LANG = l; LS.set("jb_admin_lang", l); applyI18n(); renderChats(); renderStats(); }
 
 /* ---------- theme ---------- */
 function setThemeVariant(v){
   if (v === "default") document.documentElement.removeAttribute("data-theme");
   else document.documentElement.setAttribute("data-theme", v);
-  localStorage.setItem("jb_admin_theme", v);
+  LS.set("jb_admin_theme", v);
   if (v === "dracula") { setMode("dark"); $("mode-selector").value = "dark"; }
 }
 function setMode(m){
   document.documentElement.classList.toggle("dark", m === "dark");
-  localStorage.setItem("jb_admin_mode", m);
+  LS.set("jb_admin_mode", m);
   var mt = document.querySelector("meta[name=theme-color]");
   if (mt) mt.setAttribute("content", m === "dark" ? "#090d16" : "#f8fafc");
 }
 function loadThemePrefs(){
-  var th = localStorage.getItem("jb_admin_theme") || "default";
-  var md = localStorage.getItem("jb_admin_mode") || "dark";
+  var th = LS.get("jb_admin_theme") || "default";
+  var md = LS.get("jb_admin_mode") || "dark";
   $("theme-selector").value = th; $("mode-selector").value = md;
   setThemeVariant(th); setMode(md);
 }
@@ -910,7 +915,7 @@ function doLogin(silent){
       if (!silent) btn.textContent = orig;
       if (x.s === 200 && x.d.ok) {
         sessionKey = pass;
-        localStorage.setItem("jb_admin", JSON.stringify({ key: pass, expiry: Date.now() + 30 * 60 * 1000 }));
+        LS.set("jb_admin", JSON.stringify({ key: pass, expiry: Date.now() + 30 * 60 * 1000 }));
         enterDash();
       } else {
         if (!silent) $("err-msg").textContent = t("wrong");
@@ -922,14 +927,14 @@ function enterDash(){
   $("err-msg").textContent = "";
   $("login-box").style.display = "none";
   $("dash-box").classList.add("on");
-  var sess = JSON.parse(localStorage.getItem("jb_admin") || "{}");
+  var sess = JSON.parse(LS.get("jb_admin") || "{}");
   $("s-key").textContent = sess.key ? sess.key.slice(0, 4) + "••••••••" + sess.key.slice(-4) : "—";
   $("s-expiry").textContent = sess.expiry ? new Date(sess.expiry).toLocaleString(LANG === "fa" ? "fa-IR" : "en-US") : "—";
   loadStats(); loadChats(); loadReports(); loadHealth(); loadFeed();
   startAutoRefresh();
 }
 function logout(){
-  localStorage.removeItem("jb_admin");
+  LS.del("jb_admin");
   sessionKey = "";
   stopAutoRefresh();
   $("dash-box").classList.remove("on");
@@ -1128,7 +1133,7 @@ $("cm-in").addEventListener("keydown", function(e){ if (e.key === "Enter" && !e.
 document.getElementById("chat-modal").addEventListener("click", function(e){ if (e.target === this) closeChat(); });
 document.getElementById("rep-modal").addEventListener("click", function(e){ if (e.target === this) e.target.classList.remove("on"); });
 var sess = null;
-try { sess = JSON.parse(localStorage.getItem("jb_admin") || "null"); } catch(e){}
+try { sess = JSON.parse(LS.get("jb_admin") || "null"); } catch(e){}
 if (sess && sess.key && sess.expiry > Date.now()) { sessionKey = sess.key; doLogin(true); }
 </script>
 </body></html>`;
