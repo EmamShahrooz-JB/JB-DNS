@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="JB-DNS">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#03045E"/><stop offset=".55" stop-color="#023E8A"/><stop offset="1" stop-color="#0077B6"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#90E0EF"/><stop offset=".5" stop-color="#00B4D8"/><stop offset="1" stop-color="#0077B6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#48CAE4" stop-opacity=".5"/><stop offset="1" stop-color="#48CAE4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="300" rx="28" fill="url(#bg)"/>
+  <circle cx="1050" cy="40" r="230" fill="url(#glow)"/>
+  <circle cx="120" cy="290" r="180" fill="url(#glow)"/>
+  <g opacity=".14" stroke="#CAF0F8" stroke-width="1.2" fill="none">
+    <circle cx="960" cy="150" r="70"/><circle cx="960" cy="150" r="110"/><circle cx="960" cy="150" r="150"/>
+    <path d="M810 150h300M960 0v300" stroke-dasharray="3 7"/>
+  </g>
+  <g transform="translate(88,78)">
+    <rect x="0" y="0" width="144" height="144" rx="34" fill="#03045E" opacity=".55"/>
+    <rect x="0" y="0" width="144" height="144" rx="34" fill="none" stroke="url(#ring)" stroke-width="3"/>
+    <circle cx="72" cy="72" r="50" fill="none" stroke="url(#ring)" stroke-width="7" stroke-linecap="round"
+            stroke-dasharray="251 47" transform="rotate(-90 72 72)"/>
+    <circle cx="72" cy="72" r="50" fill="none" stroke="#023E8A" stroke-width="7" opacity=".35"/>
+    <text x="72" y="86" text-anchor="middle" font-family="Vazirmatn,Tahoma,Arial,sans-serif"
+          font-size="44" font-weight="900" fill="#CAF0F8">JB</text>
+  </g>
+  <text x="290" y="128" font-family="Vazirmatn,Tahoma,Arial,sans-serif" font-size="64" font-weight="900" fill="#ffffff">JB-DNS</text>
+  <text x="292" y="172" font-family="Vazirmatn,Tahoma,Arial,sans-serif" font-size="24" font-weight="700" fill="#90E0EF">دی‌ان‌اس امن و پرسرعت برای اندروید — ساخته‌شده برای ایران 🇮🇷</text>
+  <g font-family="Vazirmatn,Tahoma,Arial,sans-serif" font-size="17" font-weight="800">
+    <rect x="292" y="200" width="92" height="38" rx="19" fill="#00B4D8" opacity=".22" stroke="#48CAE4" stroke-width="1.4"/>
+    <text x="338" y="225" text-anchor="middle" fill="#ADE8F4">DoH</text>
+    <rect x="396" y="200" width="92" height="38" rx="19" fill="#00B4D8" opacity=".22" stroke="#48CAE4" stroke-width="1.4"/>
+    <text x="442" y="225" text-anchor="middle" fill="#ADE8F4">DoT</text>
+    <rect x="500" y="200" width="128" height="38" rx="19" fill="#00B4D8" opacity=".22" stroke="#48CAE4" stroke-width="1.4"/>
+    <text x="564" y="225" text-anchor="middle" fill="#ADE8F4">DNSCrypt</text>
+    <rect x="640" y="200" width="118" height="38" rx="19" fill="#00B4D8" opacity=".22" stroke="#48CAE4" stroke-width="1.4"/>
+    <text x="699" y="225" text-anchor="middle" fill="#ADE8F4">Ad-Block</text>
+  </g>
+</svg>
