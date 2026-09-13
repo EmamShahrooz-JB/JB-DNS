@@ -19,6 +19,7 @@
 | `GET` | `/stats?t=TOKEN` | آمار کلی: گفتگوها/پیام‌ها/خوانده‌نشده/گزارش‌ها (مدیر) |
 | `GET` | `/feed?t=TOKEN` | ۴۰ پیام اخیر همهٔ گفتگوها (مدیر) |
 | `GET` | `/admin` | پنل مدیریت — طرح «دروازهٔ نهان»: ورود با کلید، سایدبار، کارت‌های آمار، ۵ تم رنگی، فارسی/انگلیسی |
+| `POST` | `/admin/pass` | تغییر کلید مدیریت `{current, next}` — هش SHA-256 در جدول `settings`؛ پس از تغییر فقط کلید جدید معتبر است |
 
 ## مدل داده (D1)
 
@@ -40,6 +41,9 @@ CREATE TABLE messages (
   text TEXT NOT NULL, meta TEXT
 );
 CREATE INDEX idx_messages_chat ON messages(chat_id, time);
+CREATE TABLE settings (  -- v6: کلید مدیریت سفارشی (هش SHA-256)
+  key TEXT PRIMARY KEY, value TEXT
+);
 ```
 
 - گزارش‌های قدیمی‌تر از **۹۰ روز** هنگام هر ثبت، خودکار حذف می‌شوند.
@@ -53,7 +57,7 @@ wrangler login
 cd cloudflare-worker
 
 wrangler d1 create jbdns-feedback          # شناسه را در wrangler.toml بگذارید
-wrangler d1 execute jbdns-feedback --remote --command "CREATE TABLE reports (id TEXT PRIMARY KEY, time TEXT NOT NULL, app TEXT, text TEXT NOT NULL, contact TEXT, diagnostics TEXT, logs TEXT, ua TEXT); CREATE INDEX idx_reports_time ON reports(time); CREATE TABLE rate_limit (key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0);"
+wrangler d1 execute jbdns-feedback --remote --command "CREATE TABLE reports (id TEXT PRIMARY KEY, time TEXT NOT NULL, app TEXT, text TEXT NOT NULL, contact TEXT, diagnostics TEXT, logs TEXT, ua TEXT); CREATE INDEX idx_reports_time ON reports(time); CREATE TABLE rate_limit (key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0); CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT);"
 
 wrangler secret put ADMIN_TOKEN            # رمز پنل مدیریت
 wrangler deploy
