@@ -49,7 +49,7 @@ export default {
 
     try {
       if (request.method === "GET" && url.pathname === "/")
-        return json({ ok: true, service: "jbdns-feedback", version: 5, storage: "d1", chat: true, time: new Date().toISOString() });
+        return json({ ok: true, service: "jbdns-feedback", version: 6, storage: "d1", chat: true, time: new Date().toISOString() });
 
       if (request.method === "POST" && url.pathname === "/chat/send")
         return await chatSend(request, env);
@@ -76,6 +76,8 @@ export default {
 
       if (request.method === "GET" && url.pathname === "/admin")
         return new Response(adminPage(), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+      if (request.method === "POST" && url.pathname === "/admin/pass")
+        return await adminChangePass(request, env);
 
       return json({ ok: false, error: "مسیر ناشناخته" }, 404);
     } catch (e) {
@@ -184,7 +186,7 @@ async function chatPoll(url, env) {
 /* ================= چت: مسیرهای مدیر ================= */
 
 async function adminChats(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const { results } = await env.DB.prepare(
     "SELECT c.id, c.created, c.last_activity, c.contact, c.unread," +
     " (SELECT text FROM messages m WHERE m.chat_id = c.id ORDER BY m.time DESC LIMIT 1) AS preview" +
@@ -194,7 +196,7 @@ async function adminChats(env, url) {
 }
 
 async function adminChat(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const id = (url.searchParams.get("id") || "").toLowerCase();
   if (!/^[a-f0-9]{8,64}$/.test(id)) return json({ ok: false, error: "شناسهٔ گفتگو نامعتبر" }, 400);
   const chat = await env.DB.prepare("SELECT * FROM chats WHERE id = ?").bind(id).first();
@@ -215,7 +217,7 @@ async function adminChat(env, url) {
 }
 
 async function adminReply(request, env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   let o;
   try { o = await readJson(request); } catch (e) { return json({ ok: false, error: e.message }, 400); }
   const chatId = typeof o.chat === "string" ? o.chat.toLowerCase() : "";
@@ -242,7 +244,7 @@ async function adminReply(request, env, url) {
 /* ================= چت: آمار و جریان پیام (پنل مدیریت) ================= */
 
 async function adminStats(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const chats = await env.DB.prepare("SELECT COUNT(*) AS c FROM chats").first();
   const msgs = await env.DB.prepare("SELECT COUNT(*) AS c FROM messages").first();
   const unread = await env.DB.prepare("SELECT COALESCE(SUM(unread),0) AS c FROM chats").first();
@@ -260,7 +262,7 @@ async function adminStats(env, url) {
 }
 
 async function adminFeed(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const { results } = await env.DB.prepare(
     "SELECT id, chat_id, time, sender, text FROM messages ORDER BY time DESC LIMIT 40"
   ).all();
@@ -308,7 +310,7 @@ async function handleReport(request, env) {
 }
 
 async function handleList(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const { results } = await env.DB
     .prepare("SELECT id, time, substr(text, 1, 90) AS preview FROM reports ORDER BY time DESC LIMIT 50")
     .all();
@@ -316,7 +318,7 @@ async function handleList(env, url) {
 }
 
 async function handleOne(env, url) {
-  const err = requireAdmin(env, url); if (err) return err;
+  const err = await requireAdmin(env, url); if (err) return err;
   const id = (url.searchParams.get("id") || "").replace(/[^a-z0-9]/gi, "");
   if (!id) return json({ ok: false, error: "شناسه لازم است" }, 400);
   const row = await env.DB.prepare("SELECT * FROM reports WHERE id = ?").bind(id).first();
@@ -353,11 +355,61 @@ function logsOrNull(arr) {
   return JSON.stringify(arr);
 }
 
-function requireAdmin(env, url) {
+async function requireAdmin(env, url) {
   const t = url.searchParams.get("t") || "";
-  if (!env.ADMIN_TOKEN || !t || t !== env.ADMIN_TOKEN)
+  if (!t) return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
+  // کلید سفارشی (در D1، به‌صورت هش) بر کلید محیطی مقدم است
+  let custom = null;
+  try {
+    const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_token_hash'").first();
+    custom = row ? row.value : null;
+  } catch (e) { /* جدول settings هنوز ساخته نشده */ }
+  if (custom) {
+    if ((await sha256Hex(t)) === custom) return null;
     return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
-  return null;
+  }
+  if (env.ADMIN_TOKEN && t === env.ADMIN_TOKEN) return null;
+  return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
+}
+
+/* تغییر کلید مدیریت از پنل — هش SHA-256 در جدول settings */
+async function adminChangePass(request, env) {
+  if (!env.DB) return json({ ok: false, error: "پایگاه‌دادهٔ D1 متصل نیست" }, 500);
+  let o;
+  try { o = await readJson(request); } catch (e) { return json({ ok: false, error: e.message }, 400); }
+  const current = typeof o.current === "string" ? o.current : "";
+  const next = typeof o.next === "string" ? o.next : "";
+  if (next.length < 8 || next.length > 64)
+    return json({ ok: false, error: "کلید جدید باید ۸ تا ۶۴ نویسه باشد" }, 400);
+  if (!/[a-zA-Z0-9]/.test(next))
+    return json({ ok: false, error: "کلید جدید باید حرف یا عدد هم داشته باشد" }, 400);
+  // سد تلاش: ۵ تلاش ناموفق در ساعت از هر IP
+  const ipHash = await hashIp(request.headers.get("CF-Connecting-IP") || "unknown");
+  const hour = new Date().toISOString().slice(0, 13);
+  const rlKey = `pass:${ipHash}:${hour}`;
+  const rl = await env.DB.prepare("SELECT count AS c FROM rate_limit WHERE key = ?").bind(rlKey).first();
+  if (rl && rl.c >= 5) return json({ ok: false, error: "تلاش‌های زیاد — یک ساعت صبر کن" }, 429);
+  // بررسی کلید فعلی
+  let ok = false;
+  try {
+    const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_token_hash'").first();
+    ok = row ? (await sha256Hex(current)) === row.value
+             : !!(env.ADMIN_TOKEN && current === env.ADMIN_TOKEN);
+  } catch (e) { ok = !!(env.ADMIN_TOKEN && current === env.ADMIN_TOKEN); }
+  if (!ok) {
+    await env.DB.prepare("INSERT INTO rate_limit(key, count) VALUES(?, 1) ON CONFLICT(key) DO UPDATE SET count = count + 1")
+      .bind(rlKey).run();
+    return json({ ok: false, error: "کلید فعلی درست نیست" }, 401);
+  }
+  await env.DB.prepare(
+    "INSERT INTO settings(key, value) VALUES('admin_token_hash', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  ).bind(await sha256Hex(next)).run();
+  return json({ ok: true });
+}
+
+async function sha256Hex(s) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 async function hashIp(ip) {
@@ -388,6 +440,8 @@ function adminPage() {
 <meta name="apple-mobile-web-app-title" content="JB-DNS">
 <meta name="format-detection" content="telephone=no">
 <title>پنل پشتیبانی JB-DNS</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
 <style>
 :root{--color-text:#0f172a;--color-text-muted:#475569;--color-primary:#6366f1;--color-primary-hover:#4f46e5;
   --color-bg:#f8fafc;--color-surface:#ffffff;--color-surface2:#f1f5f9;--color-border:#e2e8f0;
@@ -782,6 +836,19 @@ body{margin:0;font-family:Vazirmatn,'Segoe UI',Tahoma,sans-serif;background:var(
           <div class="kv"><span data-i18n="s_key">کلید فعلی</span><b id="s-key" style="direction:ltr">…</b></div>
           <div class="kv"><span data-i18n="s_expiry">اعتبار تا</span><b id="s-expiry" style="direction:ltr">…</b></div>
         </div>
+        <div class="card">
+          <div class="card-hd"><h3 data-i18n="s_pass_t">🔑 تغییر کلید مدیریت</h3></div>
+          <div style="padding:18px">
+            <div class="field"><label class="lbl" data-i18n="s_pass_cur">کلید فعلی</label>
+              <input class="inp" type="password" id="pass-cur" style="direction:ltr;text-align:left" autocomplete="off"></div>
+            <div class="field"><label class="lbl" data-i18n="s_pass_new">کلید جدید (حداقل ۸ نویسه)</label>
+              <input class="inp" type="password" id="pass-new" style="direction:ltr;text-align:left" autocomplete="off"></div>
+            <div class="field"><label class="lbl" data-i18n="s_pass_new2">تکرار کلید جدید</label>
+              <input class="inp" type="password" id="pass-new2" style="direction:ltr;text-align:left" autocomplete="off"></div>
+            <button class="btn btn-primary btn-block" id="pass-btn" onclick="changePass()" data-i18n="s_pass_btn">تغییر کلید</button>
+            <p style="font-size:10.5px;color:var(--color-text-muted);line-height:2.1;margin:13px 2px 0" data-i18n="s_pass_hint">پس از تغییر، فقط کلید جدید معتبر است — آن را در جای امن نگه دارید. کلید به‌صورت هش SHA-256 ذخیره می‌شود.</p>
+          </div>
+        </div>
       </section>
 
       <section class="view fade-in" id="view-help">
@@ -861,7 +928,10 @@ var I18N = {
     ov_chats:"گفتگوها", ov_today:"پیام امروز", ov_unread:"خوانده‌نشده", ov_msgs:"مجموع پیام‌ها", ov_reports:"گزارش‌های قدیمی",
     recent_chats:"آخرین گفتگوها", h_status:"وضعیت", h_version:"نسخهٔ ورکر", h_storage:"پایگاه‌داده", h_time:"زمان سرور",
     h_recheck:"بررسی مجدد", s_theme:"قالب رنگی", s_mode:"حالت نمایش", s_lang:"زبان", s_session:"نشست مدیریت",
-    s_key:"کلید فعلی", s_expiry:"اعتبار تا", close:"بستن", send:"ارسال", applied:"اعمال شد ✓", search_ph:"جستجوی شناسه/متن…",
+    s_key:"کلید فعلی", s_expiry:"اعتبار تا", close:"بستن", send:"ارسال", applied:"اعمال شد ✓", s_pass_t:"🔑 تغییر کلید مدیریت", s_pass_cur:"کلید فعلی", s_pass_new:"کلید جدید (حداقل ۸ نویسه)",
+    s_pass_new2:"تکرار کلید جدید", s_pass_btn:"تغییر کلید",
+    s_pass_hint:"پس از تغییر، فقط کلید جدید معتبر است — آن را در جای امن نگه دارید. کلید به‌صورت هش SHA-256 ذخیره می‌شود.",
+    pass_changed:"کلید تغییر کرد ✓", pass_mismatch:"کلیدهای جدید یکسان نیستند", pass_len:"کلید جدید باید ۸ تا ۶۴ نویسه باشد", search_ph:"جستجوی شناسه/متن…",
     reply_ph:"پاسخ خود را بنویس…", empty_chats:"هنوز گفتگویی شروع نشده", empty_rep:"گزارشی ثبت نشده",
     online_lbl:"زنده", sent:"پاسخ ارسال شد ✓", err:"خطا", wrong:"دسترسی مسدود شد",
     hp_what_t:"این پنل چیست؟",
@@ -876,7 +946,10 @@ var I18N = {
     ov_chats:"Chats", ov_today:"Msgs Today", ov_unread:"Unread", ov_msgs:"Total Messages", ov_reports:"Legacy Reports",
     recent_chats:"Recent Conversations", h_status:"Status", h_version:"Worker Version", h_storage:"Storage", h_time:"Server Time",
     h_recheck:"Re-check", s_theme:"Display Theme", s_mode:"Appearance", s_lang:"Language", s_session:"Admin Session",
-    s_key:"Current key", s_expiry:"Valid until", close:"Close", send:"Send", applied:"Applied ✓", search_ph:"Search id/text…",
+    s_key:"Current key", s_expiry:"Valid until", close:"Close", send:"Send", applied:"Applied ✓", s_pass_t:"🔑 Change Admin Key", s_pass_cur:"Current key", s_pass_new:"New key (min 8 chars)",
+    s_pass_new2:"Repeat new key", s_pass_btn:"Change key",
+    s_pass_hint:"After changing, only the new key works — keep it safe. The key is stored as a SHA-256 hash.",
+    pass_changed:"Key changed ✓", pass_mismatch:"New keys do not match", pass_len:"New key must be 8–64 characters", search_ph:"Search id/text…",
     reply_ph:"Type your reply…", empty_chats:"No conversations yet", empty_rep:"No reports",
     online_lbl:"Online", sent:"Reply sent ✓", err:"Error", wrong:"Access Denied",
     hp_what_t:"What is this panel?",
@@ -1114,6 +1187,31 @@ function sendReply(){
     if (d && d.ok) { toast(t("sent")); loadThread(); }
     else toast((d && d.error) || t("err"));
   }).catch(function(){ toast(t("err")); });
+}
+
+/* ---------- تغییر کلید مدیریت ---------- */
+function changePass(){
+  var cur = $("pass-cur").value, nw = $("pass-new").value, nw2 = $("pass-new2").value;
+  if (!cur || !nw || !nw2) { toast(t("err")); return; }
+  if (nw !== nw2) { toast(t("pass_mismatch")); return; }
+  if (nw.length < 8 || nw.length > 64) { toast(t("pass_len")); return; }
+  var btn = $("pass-btn"); btn.disabled = true;
+  fetch("admin/pass", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ current: cur, next: nw }) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled = false;
+      if (d && d.ok) {
+        sessionKey = nw;
+        LS.set("jb_admin", JSON.stringify({ key: nw, expiry: Date.now() + 30 * 60 * 1000 }));
+        $("s-key").textContent = nw.slice(0, 4) + "••••••••" + nw.slice(-4);
+        $("s-expiry").textContent = new Date(Date.now() + 30 * 60 * 1000)
+          .toLocaleString(LANG === "fa" ? "fa-IR" : "en-US");
+        $("pass-cur").value = ""; $("pass-new").value = ""; $("pass-new2").value = "";
+        toast(t("pass_changed"));
+      } else { toast((d && d.error) || t("err")); }
+    })
+    .catch(function(){ btn.disabled = false; toast(t("err")); });
 }
 
 /* ---------- data: reports ---------- */
