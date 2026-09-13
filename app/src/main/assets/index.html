@@ -186,22 +186,173 @@ body.just .spark i{animation:spark .75s cubic-bezier(.2,.7,.3,1) forwards}
 .lm.on{opacity:1;transform:none}
 
 /* ============ برگه ============ */
-.scrim{position:absolute;inset:0;background:rgba(2,6,20,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.3s;z-index:30}
+.scrim{position:absolute;inset:0;background:rgba(2,6,20,.55);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:.3s;z-index:30}
 .scrim.on{opacity:1;pointer-events:auto}
-.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--bg);border-radius:28px 28px 0 0;padding:10px 24px 26px;z-index:31;
-  transform:translateY(103%);transition:transform .48s cubic-bezier(.22,1.05,.36,1);box-shadow:0 -18px 50px rgba(0,0,0,.4)}
+:root{--sheet:rgba(255,255,255,.94);--gradB:#023E8A;--glassline:rgba(255,255,255,.6)}
+:root[data-theme="light"]{--sheet:rgba(250,253,255,.95);--gradB:#023E8A;--glassline:rgba(255,255,255,.65)}
+:root[data-theme="dark"]{--sheet:rgba(5,13,35,.93);--gradB:#0096C7;--glassline:rgba(144,224,239,.12)}
+.sheet{position:absolute;inset-inline:0;bottom:0;border-radius:30px 30px 0 0;padding:8px 20px 30px;z-index:31;
+  background:var(--sheet);backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);
+  transform:translateY(103%);transition:transform .5s cubic-bezier(.22,1.05,.36,1);
+  box-shadow:0 -20px 60px rgba(0,0,0,.45),inset 0 1px 0 var(--glassline)}
+.sheet::before{content:"";position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:360px;height:150px;
+  background:radial-gradient(closest-side,rgba(0,180,216,.16),transparent);pointer-events:none}
 .sheet.on{transform:none}
-.grab{width:40px;height:4px;border-radius:4px;background:var(--outline);margin:4px auto 16px}
+.grab{width:44px;height:4.5px;border-radius:4px;background:var(--outline);opacity:.9;margin:6px auto 14px}
 .sheet h3{margin:0;font-size:17px;font-weight:800;color:var(--on)}
-.sheet .nt{font-size:11px;color:var(--onvar);margin-top:5px;line-height:1.8}
+.sheet .nt{font-size:11px;color:var(--onvar);margin-top:4px;line-height:1.8}
 .protos{display:flex;gap:7px;margin-top:16px}
 .protos button{flex:1;padding:10px 4px;border-radius:13px;border:none;background:var(--card);color:var(--onvar);
   font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;transition:.25s}
 .protos button.on{background:var(--primary);color:var(--onprimary);transform:translateY(-1px)}
 .protos button:disabled{opacity:.28}
-.adr{margin-top:12px;font-size:11.5px;color:var(--on);background:var(--card);border-radius:13px;padding:11px 13px;
-  direction:ltr;text-align:right;word-break:break-all;animation:riseIn .35s both}
-.bres{margin-top:11px;font-size:11px;color:var(--primary);font-weight:700;min-height:15px;transition:.3s}
+/* ---- شیت سرور — بازطراحی v3.6 ---- */
+@keyframes sheetIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.sheet .stx{opacity:0}
+.sheet.on .stx{animation:sheetIn .55s cubic-bezier(.22,1.05,.36,1) both;animation-delay:calc(var(--d,0)*60ms)}
+.sh-hero{display:flex;align-items:center;gap:13px;margin-top:2px}
+.sh-av{width:48px;height:48px;border-radius:16px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-size:19px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25);
+  box-shadow:0 10px 24px rgba(0,119,182,.32),inset 0 1px 0 rgba(255,255,255,.28)}
+.av-IRAN{background:linear-gradient(135deg,#00B4D8,#0077B6)}
+.av-GLOBAL{background:linear-gradient(135deg,#48CAE4,#023E8A)}
+.av-PRIVACY{background:linear-gradient(135deg,#C77DFF,#7B2CBF)}
+.av-BLOCK{background:linear-gradient(135deg,#51CF66,#2B8A3E)}
+.av-CUSTOM{background:linear-gradient(135deg,#FFB020,#E8590C)}
+.sh-hrow{flex:1;min-width:0}
+.sh-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chmini{font-style:normal;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.2px}
+.chmini.chir{background:rgba(245,166,35,.15);color:#E8960C}
+.chmini.chbk{background:rgba(43,182,115,.15);color:#2BB673}
+.chmini.chon{background:var(--pc);color:var(--primary)}
+:root[data-theme="light"] .chmini.chir{color:#B76E00}
+:root[data-theme="light"] .chmini.chbk{color:#1E8E5A}
+.adr{margin-top:14px;display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--div);
+  background:var(--card);border-radius:16px;padding:12px 13px;cursor:pointer;font-family:inherit;
+  transition:transform .18s,background .3s}
+.adr:active{transform:scale(.98)}
+.adr .aic{width:15px;height:15px;flex:0 0 auto;fill:var(--primary)}
+.adr .atx{flex:1;min-width:0;font-size:11.5px;font-weight:600;color:var(--on);direction:ltr;text-align:right;
+  word-break:break-all;line-height:1.7}
+.adr .acp{width:26px;height:26px;flex:0 0 auto;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:var(--card2);transition:.2s}
+.adr .acp svg{width:13px;height:13px;fill:var(--onvar)}
+.adr:active .acp{background:var(--primary)}
+.adr:active .acp svg{fill:var(--onprimary)}
+.sh-lbl{font-size:10.5px;font-weight:800;color:var(--onvar);margin:16px 2px 8px;letter-spacing:.4px}
+.seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--div);border-radius:17px;padding:5px}
+.seg button{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 2px 8px;
+  border-radius:13px;border:none;background:transparent;color:var(--onvar);
+  font-family:inherit;font-size:10.5px;font-weight:800;cursor:pointer;transition:.25s cubic-bezier(.34,1.56,.64,1)}
+.seg button svg{width:14px;height:14px;fill:currentColor;opacity:.9}
+.seg button.on{background:linear-gradient(150deg,var(--primary),var(--gradB));color:var(--onprimary);
+  transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,119,182,.35)}
+.seg button:disabled{opacity:.25}
+.seg button:not(.on):not(:disabled):active{transform:scale(.94)}
+.sh-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.sh-act{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 6px;border-radius:16px;
+  border:1px solid var(--div);background:var(--card);color:var(--on);font-family:inherit;font-size:11.5px;
+  font-weight:800;cursor:pointer;transition:transform .18s,background .25s,border-color .25s,color .25s}
+.sh-act svg{width:15px;height:15px;fill:var(--primary);transition:.25s}
+.sh-act:active{transform:scale(.96)}
+.sh-act.on{border-color:rgba(43,182,115,.5);background:rgba(43,182,115,.1);color:#1E8E5A}
+.sh-act.on svg{fill:#2BB673}
+.lat{display:flex;align-items:center;gap:10px;margin-top:14px;min-height:26px}
+.lat-dot{width:8px;height:8px;border-radius:50%;background:var(--outline);flex:0 0 auto;transition:.3s}
+.lat-dot.on{box-shadow:0 0 0 4px rgba(72,202,228,.14)}
+.lat-dot.ld{background:var(--primary);animation:latpulse 1s ease-in-out infinite}
+@keyframes latpulse{50%{opacity:.35}}
+.lat-bar{flex:1;height:5px;border-radius:3px;background:var(--card2);overflow:hidden}
+.lat-fill{display:block;height:100%;width:0;border-radius:3px;background:var(--primary);
+  transition:width .8s cubic-bezier(.22,1.05,.36,1),background .3s}
+.lat-fill.ld{width:34%!important;background:linear-gradient(90deg,transparent,var(--primary),transparent);
+  animation:shim 1.1s linear infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+.lat-tx{font-size:11px;font-weight:800;color:var(--onvar);white-space:nowrap;transition:.3s}
+.cta{margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:15px 10px;border:none;border-radius:18px;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:800;color:var(--onprimary);
+  background:linear-gradient(135deg,var(--primary),var(--gradB));
+  box-shadow:0 14px 30px rgba(0,119,182,.38),inset 0 1px 0 rgba(255,255,255,.22);
+  transition:transform .18s,box-shadow .3s,background .3s}
+.cta svg{width:17px;height:17px;fill:currentColor}
+.cta:active{transform:scale(.97)}
+.cta.cur{background:var(--card);color:var(--onvar);box-shadow:none;border:1px solid var(--div)}
+
+/* ---- v4.0: تست سلامت / ویزارد باتری / بازنویسی / آمار ---- */
+.hlrow{display:flex;gap:11px;padding:11px 2px;border-bottom:1px solid var(--div);animation:riseIn .4s both}
+.hlrow:last-child{border-bottom:none}
+.hlic{width:22px;height:22px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.hlic.ok{background:rgba(43,182,115,.15);color:#2BB673}
+.hlic.bad{background:rgba(229,72,77,.15);color:#E5484D}
+.hlt{font-size:12px;font-weight:700;color:var(--on)}
+.hld{font-size:10.5px;color:var(--onvar);line-height:1.9;margin-top:2px}
+.batrow{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--div)}
+.batrow:last-child{border-bottom:none}
+.bnum{width:22px;height:22px;border-radius:8px;background:var(--pc);color:var(--primary);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.rwrow{display:flex;align-items:center;gap:10px;padding:11px 16px}
+.rwrow+.rwrow{box-shadow:inset 0 1px 0 var(--div)}
+.rwdel{background:none;border:none;color:#E5484D;font-size:14px;font-weight:800;cursor:pointer;padding:6px 10px;font-family:inherit;border-radius:9px}
+.rwdel:active{background:rgba(229,72,77,.12)}
+.toprow{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:background .16s}
+.toprow:active{background:rgba(0,180,216,.07)}
+.tdom{flex:1;min-width:0;font-size:11.5px;direction:ltr;text-align:right;color:var(--on);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar{width:60px;height:5px;border-radius:3px;background:var(--card2);overflow:hidden;flex:0 0 auto}
+.topbar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--gradB));border-radius:3px}
+.tcnt{font-size:10px;color:var(--onvar);font-weight:800;flex:0 0 auto;min-width:26px;text-align:left}
+
+/* ---- v4.2: چت پشتیبانی (تلگرام‌مانند) ---- */
+.fbchk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--card2);
+  border-radius:13px;cursor:pointer;transition:background .25s}
+.fbchk:active{background:var(--pc)}
+.fbchk input[type="checkbox"]{width:17px;height:17px;margin-top:2px;flex:0 0 auto;
+  accent-color:var(--primary);cursor:pointer}
+.fbchk .t{font-size:11.5px;font-weight:700;color:var(--on)}
+.fbchk .s{font-size:9.5px;color:var(--onvar);line-height:1.8;margin-top:2px}
+.scrim2{position:absolute;inset:0;background:rgba(2,6,20,.55);backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:.3s;z-index:65}
+.scrim2.on{opacity:1;pointer-events:auto}
+.chatov{position:absolute;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateY(100%);visibility:hidden;
+  transition:transform .3s cubic-bezier(.32,.72,.34,1),visibility .3s}
+.chatov.on{transform:translateY(0);visibility:visible}
+.chathd{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--card);z-index:2}
+.chatbk{background:none;border:none;color:var(--on);font-size:19px;cursor:pointer;padding:4px 8px;font-family:inherit}
+.chatav{width:35px;height:35px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--gradB));
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px;flex:0 0 auto}
+.chatt{font-size:12.5px;font-weight:800;color:var(--on)}
+.chatsb{font-size:9px;color:var(--onvar);margin-top:1px;display:flex;align-items:center;gap:5px}
+.dotg{width:6px;height:6px;border-radius:50%;background:#2BB673;display:inline-block;box-shadow:0 0 5px #2BB673}
+.chatbd{flex:1;overflow-y:auto;padding:12px 12px 4px;display:flex;flex-direction:column;gap:3px}
+.chatday{align-self:center;font-size:8.5px;color:var(--onvar);background:var(--card2);
+  padding:3px 12px;border-radius:9px;margin:9px 0 5px}
+.chatmsg{max-width:82%;padding:8px 11px 4px;border-radius:15px;font-size:12px;line-height:1.95;
+  word-wrap:break-word;white-space:pre-wrap;animation:msgin .2s ease}
+@keyframes msgin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.chatme{align-self:flex-end;color:#fff;background:linear-gradient(135deg,#0077B6,#0096C7);border-bottom-left-radius:5px}
+.chatin{align-self:flex-start;background:var(--card2);color:var(--on);border-bottom-right-radius:5px}
+.chatbot{align-self:flex-start;background:transparent;border:1px dashed var(--outline);color:var(--onvar);
+  font-size:10.5px;border-radius:14px}
+.chatfail{color:#FFD6D6}
+.chatfoot{display:flex;align-items:center;gap:4px;justify-content:flex-end;font-size:8px;
+  opacity:.8;margin-top:3px;direction:ltr}
+.chatme .chatfoot{color:#DFF6FF}
+.chattick{font-size:9px}
+.chattick.rd{color:#48CAE4;font-weight:800}
+.chatatt{background:rgba(0,0,0,.18);border-radius:10px;padding:6px 9px;margin-top:6px;font-size:10.5px}
+.chatatt summary{cursor:pointer;font-weight:700;color:inherit}
+.chatatt .d{direction:ltr;text-align:left;font-size:8.5px;white-space:pre-wrap;margin-top:5px;opacity:.85}
+.chatcmp{display:flex;align-items:flex-end;gap:7px;padding:8px 10px calc(9px + env(safe-area-inset-bottom));
+  background:var(--card)}
+.chatib{background:var(--card2);border:none;color:var(--on);width:38px;height:40px;border-radius:50%;
+  font-size:16px;cursor:pointer;flex:0 0 auto;font-family:inherit}
+#chatIn{flex:1;background:var(--card2);border:1px solid transparent;border-radius:18px;padding:10px 14px;
+  color:var(--on);font-family:inherit;font-size:12px;line-height:1.8;resize:none;max-height:92px;outline:none}
+#chatIn:focus{border-color:var(--primary)}
+.chatsnd{width:40px;height:40px;border-radius:50%;border:none;font-size:15px;cursor:pointer;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--gradB));transform:scaleX(-1)}
+.chatsnd:disabled{opacity:.5}
 
 /* ============ تنظیمات ============ */
 .grp{padding:20px 24px 7px;font-size:10.5px;font-weight:800;color:var(--primary);letter-spacing:.3px}
@@ -583,6 +734,7 @@ body{padding:0;gap:0;background:var(--bg)}
       <div class="acts stg" style="--i:4">
         <button class="gbtn pri" id="goSrv"><svg viewBox="0 0 24 24"><path d="M4,14h2c0.55,0,1-0.45,1-1v-2c0-0.55-0.45-1-1-1H4c-0.55,0-1,0.45-1,1v2C3,13.55,3.45,14,4,14z M4,19h2c0.55,0,1-0.45,1-1 v-2c0-0.55-0.45-1-1-1H4c-0.55,0-1,0.45-1,1v2C3,18.55,3.45,19,4,19z M4,9h2c0.55,0,1-0.45,1-1V6c0-0.55-0.45-1-1-1H4 C3.45,5,3,5.45,3,6v2C3,8.55,3.45,9,4,9z M9,14h11c0.55,0,1-0.45,1-1v-2c0-0.55-0.45-1-1-1H9c-0.55,0-1,0.45-1,1v2 C8,13.55,8.45,14,9,14z M9,19h11c0.55,0,1-0.45,1-1v-2c0-0.55-0.45-1-1-1H9c-0.55,0-1,0.45-1,1v2C8,18.55,8.45,19,9,19z M8,6v2 c0,0.55,0.45,1,1,1h11c0.55,0,1-0.45,1-1V6c0-0.55-0.45-1-1-1H9C8.45,5,8,5.45,8,6z"/></svg><span class="gt">سرورها</span><span class="loader gldr"><svg viewBox="0 0 512 512"><path d="M64 32C28.7 32 0 60.7 0 96v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm48 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0zM64 288c-35.3 0-64 28.7-64 64v64c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V352c0-35.3-28.7-64-64-64H64zm280 72a24 24 0 1 1 0 48 24 24 0 1 1 0-48zm56 24a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/></svg><span></span></span></button>
         <button class="gbtn" id="benchBtn"><svg viewBox="0 0 24 24"><path d="M10.67,21L10.67,21c-0.35,0-0.62-0.31-0.57-0.66L11,14H7.5c-0.88,0-0.33-0.75-0.31-0.78c1.26-2.23,3.15-5.53,5.65-9.93 c0.1-0.18,0.3-0.29,0.5-0.29h0c0.35,0,0.62,0.31,0.57,0.66L13.01,10h3.51c0.4,0,0.62,0.19,0.4,0.66c-3.29,5.74-5.2,9.09-5.75,10.05 C11.07,20.89,10.88,21,10.67,21z"/></svg>سنجش</button>
+        <button class="gbtn" id="hlBtn"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 11h-4v4h-2v-4H7v-2h4V8h2v4h4v2z"/></svg>سلامت</button>
       </div>
       <div class="bestrow stg" style="--i:5">
         <button class="gbtn pri best" id="bestDns"><svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z"/></svg>انتخاب بهترین DNS</button>
@@ -635,6 +787,30 @@ body{padding:0;gap:0;background:var(--bg)}
           <div class="s" id="blStatus" style="font-size:10px;color:var(--onvar);line-height:1.8">—</div>
         </div>
       </div>
+      <div class="grp stg" style="--i:3">فهرست‌های آمادهٔ مسدودسازی</div>
+      <div class="card stg" style="--i:3" id="catList"></div>
+      <div class="grp stg" style="--i:3">بازنویسی DNS (Cloaking)</div>
+      <div class="card stg" style="--i:3">
+        <div id="rwList"></div>
+        <div style="padding:8px 16px 14px"><button class="gbtn" id="rwAdd">＋ افزودن قاعدهٔ بازنویسی</button></div>
+      </div>
+      <div class="grp stg" style="--i:4">پشتیبان‌گیری و انتقال</div>
+      <div class="card stg" style="--i:4">
+        <div style="padding:14px 16px;display:flex;gap:10px">
+          <button class="gbtn" id="bkEx">📤 خروجی پشتیبان</button>
+          <button class="gbtn" id="bkIm">📥 بازیابی از فایل</button>
+        </div>
+      </div>
+      <div class="grp stg" style="--i:4">پایداری اتصال</div>
+      <div class="card stg" style="--i:4">
+        <div class="rw" id="rowBat" style="cursor:pointer">
+          <div style="flex:1">
+            <div class="t">جلوگیری از بسته‌شدن (باتری / اجرای خودکار)</div>
+            <div class="s" id="batHint">ویزارد گام‌به‌گام برای شیائومی، هواوی و…</div>
+          </div>
+          <svg viewBox="0 0 24 24" style="flex:none;width:20px;height:20px;fill:var(--onvar)"><path d="M15.41,7.41 14,6l-6,6 6,6 1.41-1.41L10.83,12z"/></svg>
+        </div>
+      </div>
       <div class="grp stg" style="--i:3">اتصال</div>
       <div class="card stg" style="--i:3" id="cConn"></div>
       <div class="grp stg" style="--i:4">تونل</div>
@@ -658,11 +834,22 @@ body{padding:0;gap:0;background:var(--bg)}
       <div class="card stg" style="--i:5">
         <div class="abt"><div class="lg"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAABMgUlEQVR42sW9d5xcV3k+/rzn3DJ1+2qlVZesYsmWe5Gb3G1sgx2MgzEdDDGmhCQ0B0wSCCEJ5JsQQkJCqAEDjm2MaTa25V5lyVbvWq12tb1PveWc9/vHzJ25d3Z2Jdn8vr/9LMt6NXPn3vOe89bnfV4CCMFX6TdGzR9O9IsADn7O9K9v5KvmNim4KB/Hi49933jDN8eRVeDZrykBAohABDCIys9DlQc77hWJLMes8qMTuWD4jzTt+jTTa05oA1GdS73O3TfrY9feGIFk6Kmo3iLWuSzVPjDX20M0873Nsr51P7HugtK0N9C0ezseidZcv/YeKNig9W6eZjgBFPpnCn3z9JMmAQFw8Df6w6mJiiI65prSrEtT/aXuAtRdwuAcc0gqNMPaVZ+V6n80ZlViNKsSqrlVmv7gMvqRTDPe5fFvZzpBCVb2F53o0Q99DE9/YK53bxSo2emPSbUGLHKgZ5XisQ0K1RpXruwqcdyG6EQPxix2OLxqfCKLTpX/Mdc1sXxCN106JdEXvFFjPtPn172TWgH8gVyA4/JeZtm/EZMUeS8d082qrGz5NXwMqZQ8KCqLYfr2r6u7Z/p9lr/U94jqCqBGi/EfSjYEYnB06espiYhzOeN9BFeLHKh6QuPa8xZ6F9fRY9M/c5ZPOK6ln+UQzHQCjunFz3SeeIaY4FgGe5qSqW6w0v4svYiJiafp66r24Mr/EwVbu84RYzC46npUzDUH/ki9xzumaqp504zbrOb4iBOJemrePy3sqL3dWUMBiuz5qDKq5/KEwq3Aywl0ONdsVKbonZTUS81dcvWEVM4lT1t0Or69HzmUJ6QZxHHs/xNVebN6aRS+3WkvLu/d8iuZ6xqD6GWZA602bfk4uCjAzDVyDG12Di0yo3oswmvPr1v3nrAA3ljETrNpKIp65/UccI5YAprm3VJtsFG7QFznJ0fPBDNTjV6uXWeqUWuzaaHXbyaPRwUdz36nGXQO1SqV6nGv9a9D6y7qBFgkak9VOBbmitPPYC6fBq7IIHw4mIJ/CnI1PM0gl48OT8syBf9Z11K8HkkYJ77ZjzOxVdKGHN2nVHKGQpqoZPooWM1KJFv5KcoiIVEWQ1V+RACIuKrnS6unwBrQIAbrkDA4kBWDGCifAarzaETEHNn/pY8MtNix3eDw8s3q9M16Ao5HpLV7P0jqIeJkBKsWPK0InEGKZtBKCy1AAiSDXwSRJBIkBEgwCybJLKq+PgmAiTRBEymwZq1Y+6x9sAYUmMsiAQM6dER0WNVURBiyvBxyXOu6knzcizaT3f4DBGIz+5rlRa9s0pKBpfK2jaia8loDAmRCSCEsEpIhNRvQMXAKIg0jDbMBRhqxONkxy7LB5HkuK4+LBXhT8DNwM/AnIDIQBYIjoFgrrTywAlT5fLAGEIiEARCHBcBRhROJHvjYumh2rfCGBECzSn6aqxNS98RlxRJsfBFSNQKQIAkyhTRJmgpx6AZwC+ILZfvieYuXdC6Z197RPHdBc+vCxlhzvCklWuPIaxgESyDvIlNAdqIw0D05cGR8ZGi0v+to36HDzuAh5I+CRmHkBIrQvvYdsAdWYBVSTWVJVBVPkKEIR3MUNcknKoA/lBc0U8IrtDmqNRIKvJ6ynuGqzgn0DEmQJGGSNDVs+K0wl9DcNctOXnva+atOPnfJgpNs+CgUkZuLfBGZPdmjW4dH+ovOgLfmuiWJBL/yQI/Z7M9b3LTw1Dbr5JQZR8sALBMw0HuocHDr0W3P7zq4fYc/sAtuF4wJgSIrj7UL7YNVoJQq1kIHVotRyWeEEwk83YWdPT49RpJOvN7Fr5eoIUzTOQBESN0HtpQkyAAkGTYZtlZJYBl1rDtl/QUXX3fmqrNb7GaMj2LHq8Pbn+pva2pde1Vn157eLfe/3Ld7OwrjkC7GvWv/8mPpBv7fz/0bmgBlwG6ee9LJp928fvG6ZXuf7B/sGlh7ycLTzp3bNh/FKezbPPrSb1/d8eLLXt9m6ENk5Eg52nfAPtgPzLUOzkFlmTTXqiOul1DkmZMFs52SGgFEXjSTzmLUhPc0Pcbiqs4JOzmiXAUSEmSStMmwtd8A64y56y7e8NaLNly3VMewf3fm1ReO7nzt6GjXGIaGrnj/JcsumP/UD5/Z9/TL8LshRoUuCDg6k7ziU3cn08ZDd98lGh2tSQsLuhFy4eKzT7/49usyXc4v/2kjGsyW1QtPWttx5sUL15zSWMxj8+NHXrj/6SNbnkBxO5mTpIrad8AuWJf1Usk+U8kwgKFrwwWelvKbnlg6XsNwAidgusNDiEostP2pZG+n6RwBMkjGyIxrvwH2GSsuvP66D1x55gXJfQeKz/56x+Znj2R7joJcUDEZj739C+8ez0799qvfd0Z3kTUKL8u+C+0KSTqXvOLTf5tIm7/64l+IeE5rQBgkY7CS7Kat9Iob/vL9jfOXPPCl+yan8gADicS8jrXnLL7wxlNXrjT3bc4++oOndj7xK+RfEeYU+wUumYeS11QyCdAVB7fWMvP0fB+fYJrg9UfCqGZOiKJZk3LKjChwskv+O0Sw8W1hxTXSwNplF958053XrD4rsemZ3sd+/ELXjl64I4h70tQqn2tKtNzypY/tfnXXs//6bZiDQo9rrwj2SvtUGJYuGFd9+mvJBuPBuz8h4r723UDGFtlJpjjy7efe+aF1V2345V9+c3j0qGxoVp4JLw2jYf6qjivfceHZG+b07sr/+tuP7Nz4C/jbBU1prwDtVCMJMKCpksuAjiw610RnpczUiZljedwlnho1Q+H/opJ/yYFsiLgSRlGw+mSSkSArxWpZ04rb3vuVT938yTMP7xv49l2/ePonj08MHyJrWGCUikd0pjcl5c3/ePeO555/4V++RrGj5I2xl4cuCcAHmATYl4vXXyVNuf/J35DhsfYBBe0DPpRD7IqY0/v0S56MXf6J9x154pnc0VcEJkjmIDNTw8NbH962aWPv3JXzb/rY2SedddmR/XambxhmgYgCexDKrFR+BG7FtEr+8ZTz6JgCmL3qSKEKYkTnVIpKFFn90pYXECakLawki2bEL732Tz53+z/eMJEr/Odn7n3qB7/J5Y6SNU5uP08dQLEPqmBx/M1/97V9Wza9/I0vU2Kc3SmoArQb+I4aAAliJRdfcIW0jANP/ZakXxZAKfKCBitWjoj7g5teLQrr0j/9k4OPPe1M9cAd4PwgIS/iKped2vbI1leeGlx67vIbP3FxoumMA9tyujgkTMWaa8oNVI5iInVmmoYTmKHKfbwnYHZXhwPPncMJmZAfKkCB0q8GtCZkTMTSWi3qWPuuj/3rZ5ZfNP+ev/vlr77+08zIXhHPodjN2UMoDkAXhGDOuVd/7suDmbGX//4uSuTZy0A7gF+OoUpqgUBCshILzrvcsM1DT/2GDBXEvTpwVDRYsfZFHMObN5mdS8582y37fvNrFi5UHt4YF0cECiKB7Gj/q7/ecfiQt+G951/wR1ce3WeNHz5CtkMa5atFjFslmRK1hLMWqF+3AGZFKlB19bmy+iUJhVafjARZDazWrL/tc7f/yy17tx75j49/s2/b8xTPkHeUM4fgDEFloR0hoLPOWbfdETv51Ke/8HGSk/Az5aApnD8ofa4wWGH+uZdLyzr89G/J0Kz9UoYnpEAYYFYexYy+Z55rv+DSeaec3fPUo2T58PNgl70pzg8SuSItR/bve+6+7enO+Td/4QrwyYdeOQwxSuUsSlXZEx2jukEzgGhm0kLHKQCiGaKt8kezoDK2QYS+TbISLBsovuHtX7x7w+1n/vhvHnj8m9/VckiISc50wRmGykIVwR4Rs+MtXHfR6g/82WNfuNOf6iYUWLvRvGbpk0UgANlx9hXSso88+3D5BIRUBpXtogZrYgUTR198ae377/QzUxN7XyWDoRxoF9qFn+HCqLCENtz9j23p2utd/cnLTzrjwj3PjfnOUSE1ax3OQwQ5rYqGCie5akAub+gE0MzADaqCE7ik9kMJhlJeQVjCSjI3Jee8+SPf+qumkxr//cP/cfi534lUHoU+zvdAZaCLYAfsERjCsMzUeXd9Y/PPvjfx2qNkKfbdiNNdBfCJsl1RsuOcK8xYoufZh2H40CpQhBTJt5aUhoAu5Ea7e0+741MDzz3rFsaJXbAPVmAPqsDuJGlHpuTogd1bfn3olJvWX/qu6/c8M5EfOyQszUoFjmlZD4UziNPKShTKg9KsoJ7jOgFUC3mi8MMFmXoKZReEKcyE5qb2Fbd99Dt39w0Mf/ejX8uNbBVWVme74Y5AlVwat6ReyDDZUWd88O5JxoHvf4VixH4RxNVFjxwsAZIkTfhm+9lXaGn1P/8omaUYKpRcIkKosgatyTYLPQfj81ct3/Cm7o0PkQnosGnx4efYnRLxmOuMvPbgpobly67+s7f2bRUTvXuE5VXOQd3MF6H64dNgHPxGbADRDIXcsr9fKhyWlH55b1rCimvVtODU99/+H5/a9MQrD37x61oOkx7jXDf8DHQBpd1X8mdIsqLWZWctve2jW772OV0cBTtgHWylUi5akjCEMEgYJE0ybGHYpGItZ10q4qnhl54SNghEQhIZJCRIEgRVTFHphrUm0xrdsWvhH7/fHxzKdO8jg4LMqC67WOyxO0lCk00HHn6J0nNvvPvG/h0Y7dolLJ+VruYBiOu5QLU1ozduhGmagaFqhoEqbk8pnSlAhrDiWjXOP/Vd7/3WXzz+841P/eu/iZSD4lEu9EHlAl9eVdPT0iZtn/mJrx54buP4y78VNhEzpAFhgkyQAZbQBpTBSrKyWSXYjzOa2W+de97VUvj9z73MiLNL7BusBCsJloBRDv2EJGmQkCQECaFz2VzGXfm2D/Q98QjDieQeoMpJIVUg7Yum5JFnt09mY9d84Y9HdvNo1w5h+axVNYNdRTMzKtBmngkyWt9sG8dcfa5NtFWK1oHbU00zGMKMa53uWPm22/75M7+/57FX/vs7oknp7BG4o1AF6CJ04EqWTLY0tKsXrL/GmL+s92tfgGnpggNIwIKRlLFGO9kca+yINzTa6bZYQ1M8lTZTDVY8TrEWy2x2lsyBKF72mW96VJRe0S1MuFNjTq6Qn5osTAwXJ0eczLCTm1DFKagCoBiMWGz0hScmr7913uU39fzuO2SZgbFhsAr8V5/ZB3sivXjbT79XdNxrv3bHbz6Z73r5+8Ji7ebLgTCBoMFVW8B14ZD1dFHFuM0ugJkKkhQKviq2QZC0NFIN86665euff/qhp1757n+JJqUzR8pKn/3K6hMIQkIYmi0y0/OvfefWn/zY9IyGJeel2uelOxamO5eabR12c7NpWRBSawXls++qYsEpOr4Sru8Vs33KSSkpDa/oGbAtaSTaGxYuicUMWJYi0zQEa+0VHW9qwh0ZnOw7nDnalRnqy/T17v3h99a+94P9Tz/sO31kErQP7XNJF5VCMGguKmhPNJ2074EfCxvXfO3P7//gyPDBXwhDa69QgisxBEFXggNGuBJ4zPxC+cXiOIpcFIkHy6tP1bqKMEjYMBuM2Lm3ffOb3V2Hn/z7vxNJT+eOwB2DLgQ1ECZBDAHFYAUk4qnOOedc3Xn7X2PrC2huFTFLZbOF0eHCaP/U0FF3fLAwPuplJv1CHp4Lz4X2wAALGBY8LPrAXTImuv79K7AEvDwYMG0QYBjCjhmJpJFuijU3J1vmpjs6Y23zk+3t2ozBKeqhMf+MCwbv/ebok/flMgPgLARBMrFirQMzbkDGYbWIxhV6TJ98+4fPuOrSh+74eHb0CdJZVk7Zg4iUE6rZ6VAGabZaunF8BfawRgoFYuW9L0EGmUntz7/6U58dKUw9+fV/ECmlc71wR6AcsEusIQQz2PcA2di+vH3t+qZTL7bmLBluW7n7hacTR7dNdB0qHN3LU0NwsoALKACQAkIgVDcr5zukySyVGmcVJzlGlmZR0SRgBZ2Dm4U7wHlNY8yAAViIJWXz3NTC1ekFSwr5fNOb71h30bXF/q7s7heGtj432b+X4UKaJMBagT1ogjuupw6JpkW7v/uddGfbhs9//nefOsJyP1hBM5gZBAoAe/VAMq+7JkxR6BpVAGSEiuEtbX9TmAnttpz97i8uvflND975ca8wQv4AFwagC9A+CWLPB9xYfM7cUy/pOPdabl08mc2M7nxNT4613vi+A1/9AE92QxAEIJhQckt0GE8VVaZEhs0OLXz33WTGj3zvs2RTVZVHjFjgkpYCdSZoghbQEIl5J33xB8O/v08YZvupZyQam/Vo78Srjw9u2VjI9gAWmZJLkjMSFJuL2Dx4iSu+8S+Zl1576VufFrFR7eaDSo4GM0Wy1pFK8gzIOwJYztDlE8o0haOaIN4FIfA7JRk2q/i8U95y7l984uEv/W2+Zw9hggv90AWChlJQhXTL4uWXv2/RNR/WbYuO7Hzp0G+/O/LkA/n9T7eec21+fCT3yoMiTsxFsAftlTRy2UGspoU5yMwAYBIEpVNrLlIa2e2PkAC0F32lDhIYClqXL8s+4JPUImboYlG0Lraamod+8U8jm34/uPX5guulT71gwYa3Ns5Z5o0PF6cGwYIMCdbQHgnB0up/dee6P/0T5/D4eNdOMjS0qiwxHQMfVd8UyJk7LCjUm0OhCLik/YPVFxaMpBlfdeWX/nHz7x7ue+QBkWDO9YAdsA8/l2yat/yy97ddcOvE+MTBx34w+NT/FLo3szMFA2aicd61d/Q//J9qoruc7ARHV7yUkuQQhpGDlKCA9hMrLvB9zu9+lIQAqyruKnJiQt8ceJxagX01MdJ68a3Z7U9rNcHFkeLhV8deeWRk/w5z7tKO9W9tmLfaGe11M0MQFgAohxIN3sjE1FTu9A/c3rPxBd8dIKgwnoXCtfr6Vrga0E8XANUpudTUeGtT/FJYCXabz/nAXU5jw6vf+AolJeePQufh5aUU88+6seP8W0aOdnX9/j8zex7W2VEyBAkiArxC86pLzM61I4//BwRDe+XlpiqYMPoYEYAbkYT2E8vPVz6K+x8nIcG6/JaIzmIKA3UrFTzNZEh/fCCxcoN2Mk7vZiopQAmdGcrse3botWc42dp23s2xps5C335285AGvAKlmjPbd6VOP33pqWd1P7FRWC4rP5KgmZ4mjcRofDwFmZqMf/V6VBWABAkSJnN8zqrL13zgI8987R+83DCpcbjjcCdTHcs7zrm5kM91P/H9fM9z0IqkGQScTCSg3daL3j95eEex60kSshoQgYKaOAVZD6YadCNR6Qqxxes9B+7hJ0BmCARXcY1r0vkIZ2gIBC6S2RhfcnZu1yMQEsoD+xBM0gQ7xaNbxne/KFuXtJ68QRUz3kQfhCCA4g2jW7cvedf7i139md5dJBW0jlYEp/cK0kyhmZie76wGXxT1hMrZZpRlICSMGFHL6R+4Y8fvH80f3EaGz4Vh+PnGZefHO9cdffn+kS0/gcqQjAOKtVcBRbHWwmwUycW53RsBo5zIZCYGMYfKewxoYg5B1gJcAjOgtOOy50VsQ2AMI6ieKiqm8l6AFcjM7XuerQ4Zb4Mq3wO0Zu1Be5Ax4vzk5v/pe+4nVsfqhpUbSLlcHCbk3IHuXffds/y9H5bWPJAJkgFyklCvTj49k1N5icA0dGu12hPK+XCkAkogIYTJrlx60Zv95jkH7/9vShCyvcRuatHZXiEzvOUelekjmQRr1j60htZVFaIdu/2k4sS4N7wHwggpDUYE2l8LWS6vILgUNBVzRb9YDMGqatylyrs4VFRnKm0CaAihJg4VJ4bknNXgYjnBwpq0ImZoj7VPRlznBsa33ONMDdkLziSAs32Usgce/kVW0OKr38GOTYaBkIhnaHQE11NBYnojBtdLMJVLL2XbSyDBwpKxjsU3vmv7/T/k7Aj8cdYFo3l+YXBnvm8ThAkiVm5ZNSMEBSQBeEb7mlzPq+AclXCy4FALVbCLa1DNHLWlYL+Q9/P5Wgz59C4NqpVuIBINFNzezWbbyYBfStuFTp4GNJQHYkjT6X/FGdxBDQsADX8cfvHg/36/5dqbzcZFDAskI2mz2i00Y/v0cUEiynWhakpOkjC5SEsvuSnjucNP/xZxg91xshu80QMqNwBhBQ5yGO4cXiNDJBY5fVsAKqe3IminsttVL68VvohmrwjfjcpselGwFC5Nb31hQAHS7d0Cay5gV7ytyrWIAdal0wBhcH5YT+yDlYAzQXGZ2fTM+PBQ56U3w5EkZBBUiXISFxT1yOonJET0hup17HPUwJfRPqZMdLRuuOnAb++BmyN/Aqw42ws/D5JgFeou4dol0T5ZzcqTanw/yAoOR+TwldopKriDsB9DIXwgO3l2c9NFwzVN6uFnrNFLJPXkIb+Qo1gbtMfRomLFXBAzWEEAfo6zvQCTygHewO9/1nLJ9Wayg2FWOhiYQqFXpdV+hsKkmCX9Hzq0FDivBICEhIuO06/M+mpi06OwDXYn4E2C3cpKVKRfgxMjIsCn+Fw3O8zeOJVOfQWEX6t5AnRmpYcO4Z4LYi/PzlQJoMbVMIGr7khg0aM4jsAQl3qb1KSf6aXYHMAvN0VxTYMOl5r6yphq7cEd5+IYLCO39bmxqamWs6+FSySMAAQ1UxWMZzkB0X4citRWawI0JgMy1XbetQMv/gaFDOksVA7shVtTuBq7lU9y6CKK7FY91VXODzOHar7EtaXtyO7gQBbl23Iz8PKRBrM6zRaRDieOnMlyh56e6oHZCKiwLSSqvqh67FiBFbPH/iT5U3ALo8891HjuNWQ2MBkVFcTTH6EaE0R2g6gjpagXUsW4lSIBYUBR05LTuaF97OWHYcfYHS9nDkII77rNW0FXHmmOq0x3tHU5vPQ0zTUI3BjikjNcug77efYyIc+PIoDtUq6XCdMsQ8hh1IDg3BGGGaT6UMPMQuHSb7nQr8A+3HHYRn7rk8pOp5eeDp9IiGjUVQlFgl+oIvbyCok6WQuelblFGFCibd2GiUPbeOwowQ1h+cI6h6MeL4XyCQa0w84wIMMV99ArwdPUJVcAgNUzQ/Bz8HNBYr10KVEpiJeDYKJQYZ84yo0BMCDhjkE7IDPivXJtGBVaBg2tWBUIjh7vnzrwautpl0MRyKjsVK4bkEUacqjGDaVovFgxHiF0LQSzEIlma+Fpo9segzSgstB+1ZBWMPQRmhaKoCiFzX4WfrZMlhOunlfaN6gmoqdwn1kVCqUd6GLQ8FSWMZf1ZNB5zWV4NkdWv6oQQARVYDcDMsudGfWxsEHCuSx+De2yNwXTnNr2BM1ZJVNtzLLsqU9nR0G18yMsGRFxVCkU9Yb2Y1UcJKB0qnOVo6jQ9RoMwaoQyp0Fq0nBA5PgKkChsm4m/BzYC25U1LwxsDSVNQ17YBTKNgpoB9opb6MqfqLSiiNQ8+nVbp3Kd+laGn4WZER3aukRAq1XY15KmVq/ACmc3h2FohvvPBmKCaIGKVEP3FMtHoi6VprrgLyonH7QIrX0zMmebZwbAZdKVDV9nAFCQshqW0A5WC9teQMqH/WsRPS78i4K2daQKq/0ULIH9kAUfW8IohGuWwSSDogPQi8DQeVLwVRlubki0fK7QriYqpvqQRdQGMv17bLmrQULCBnyVgQgCKJe7z/Vr4hNo7UJo2uIySArGe9YPb71YQBQxVIjA0D1E6ulFWSOZJ9Igj0IK3rGKBI3ciXi1dEWIaaqlhdlSA+ZgAjDBSJGl6reTsVP43JUH1Jy7AXZybKfGlHLtYQUXHVQtQNhFg9vTS67GFacOQ9hgFWpNsykASaNapaXOGwrjVoDzGF/lEOsAQQIaNgtc2Gm3YE9kBK6UM2OkSENWaVBC6LnQACslCKQkALCgDAgkrWww9JbyrgErZXPQa8EhQpjoXS7gFYQFhkWMYMEl8/ZNB+UdZACUqxUpfGRTLPqagsiSIbJ2q+QSpCQJGVVBzLrUs6OAEAICWEwMQzTH9xVbD9Hplp03oMgsCJWgGatWHlMolxhpdqtbswWKERtCJFgTVbr0nxuUk0NQBCUAmsYSdm+Sum4KiQgY/DzZb8IftljA6AcpGPMUE4S0oYwQaqsfEvS0gpUhnJCO/CmYIwLTGivAPgoIzEjOAEy4mhYztTMbpqNFEDwpqALwaFR0AHMhBRYsfagczDzpDMQNhpO4pwGx8voa9YMgpiEGIefA5jsFrYXcJ7LsT0JZgeNFrmDcMdZxLWfgrLBcfjErlnYsw1eJzhRaiFhSLAPw6Oky9lu6GK5n4kpxDjCRh2YRJW8jDjc+kICINk0vzDSAy8P0yol8YUQrOy1ay9514c/VJRwR0bJnfKKOUnaV55Svla+bYof/eRn7W1zbn7nB31pC2lA+VqT0toypedrwQxixQSwcooDff0bH3++d9ejZBxiP8dQdbrfhAnPWHPhDUtvfPucNrPg6WzfgPQzHmvH8+H5IK00CFqSZq2UM5XtOnTo+ZfGRvaSSYnEvLPf9yHR2kJuzi9mSCtJXu9Lm/ZvehZ6J6CB9ILV56+6+irHJ8GaNZsSO3/3yOChl+AlWtqWLTzj9OTipbKhWQophK2hiSz2CwT47MftmGlbU72DL/70O57oI12ouudcHxVBHPFRKdLoW3LmhECs3Rk6CHCwzaHdKZE9cHCrO3Vg4Wc+/86RUZu9OVozWCulhJDxeKz70IFvfe3F/GBiw2nvO/nkznyhaBnSU2yaplKamT1fCSJfac3kKSae//H3nPOxPxMvP/FzIYpaaQqjjhkgZm8KNHTgld+N3rTBWnWKGlfF+c3SgKvgF0AOIMvBSclamzZar8NZb92//+++fHj/S4WeLQdsP3ftGTwAzQBDmFh5wfr0h16ayltCOLow6Nne/rddM3YEQkPHkRjpn/r2lyhXvPCm21K33HqoaXGPglvSZh44OMNg6ATsVtitKH7iLp+9GcgQIyqIZm0sCDpnDcuw0mrqKIgAr6wxAO0OOkJ89Yuf6zqw82+/8rmBwWEB9n2/lFXp7Jz3nW//V26yi2Tr6ODgcGt7/+BwPB4zpCAiz/M9T0kBEBlSOK4icCabX7B4/p0fvOClJx8kWIAX5tEI0kI+qXF3bNvgX7xf/s1vVKG1DCQhBQZ8AjRKoRUkiODxBPGhk1ec/Y5bj9y9UWsl+g9MvXyVHvQhBTwNQ+5f2mS2pjCgIBmwOk5bu3eLdva6YMZJsfwD/6XHNp132+cn3/fZZ7cDWzwoDaEhBHyGX9KpDCJYOndGAp//U2z8Fc2fi4kMl/VtNL88zQviCtkj1/Y/EVgLM64Ng/NDoBK0OMgTKMW5biPR8bMffVv7Y5+/+y7X07ZtKKWkNPr7jz78u0eJrEuvuPKCC9cf6e1PJ2NCiJbmBoJwXI+DiDWbLwJcKDrxuGUJjE1OQmchAyRqTf8tEVQeWqdXdFBjQ2ZCQBOUjwYbTYAHMoLejizgK5Ak5XOP3kMLmJBoa7evuEUfFSQEg8iQTChyTLa0AEWtY4n2Tves65whQRAcM0w/6z//88S8Zf1v+dSRF1hMeewxx21qKiNjUTK0HqAgFoB++0218QHMW8R9r04DpPBMwCyq+i1EkYwVAayFlYBWqjhRLulFq1V+fsiMN997z3dPPXXNH7/jHWOjo0pzY2Pj//7sJyODh0HN73jHLZlcQfk+ESVTib+5++6DB/dKq5GIfc+T5P/5pz6zZPlK1/OJwKwfefhxKEXSr2BRAh4QrjB7kGied/X7DxZi7HgQhLRpjjxOO7eQ0S6FUp6rbKmX3az9JmhmsJDk9/WxGmi7/N0Deg4mXUDCIDYJ2ncdabV3Ahq+blx/Sa9egEEHYJoj5I6N3sTuxK1/3zuaptGCFpKabVncRjt+T6YtSAA2a8DPao5jp6t+8U+Ys5CHtgOaOaJHQtnbsAAoWgCuTWUwtBZ2XHmu9opRhqpqjsAvZhtbV11w4YVj4xP5ghuzLbeYv+++B4l45SlrLrjwnL7+QQKnUqlDBw/cc89PtJ8DbEACBUB85nN3ua7HWmmgt7fv2adfIEto5YFktR2USlEoE4F1PL1kSWHJpeowk6fYtIyUUt/6lO57DYiVPD8Bz/rsqmJsA4oFsIQg77kHBMnCuW/J9gBO0GyrGQqch25dAEDacZx3Q/ZIaftJIdl7+L+MeNpf+w7dw6QZLIj78Z83q4kDgAQMLi8mA0lQQsxfoYdfhSqCZJk7J8LFQvUi4dqUU7Scwwwz5rt5KDccVVcIUISUzLHr3nLj/IULMpms0qqxuXHjxo0H9+1mtm+79WaG0EoppS3L+u53v6/9HJAESg4rvecDdy5YctLg0FChUGxraf3ZT+/JjvZLWeASj4cwQBaEBUiQWWJUAacbztswnG9FxmcF2IL2PMF9e2E2wpBkxSBhr7tMzF+PcR8uwTLFRLe/5V57zfnZ5DkY9KEImuFpOBqO4hxU03ygaK5cOdlwAcYUaUbcRO82deCRxPo/KqpFmCiyByQN/dy/qYkDjFjpGzIFu4nsFMWI4oqHXoUzRSSn4WtmwYYGimdaMZBLRT1FlnIdsA+yiARYMRGXyI+JNJtGatEfv+36oZEJpRmsnWLxf370Y4LbsWDdxRsuHhweVUopxQcPHsxnJ6646u0y3sG6AOWuWr365re9qb+v37ZjLc2N99//vz/50Y9Fot1HGu0nk5kEM0FDGFoYRvGocno522OmErzm+mI3k/JZGIjBf+G/GQqqCK2YJFjIC2/LjVgoZiEFpYhf+gnUpN7wLnfQQCEDktRgwSDOajAwDhjzAaazrysMWchnGIJaQM/8gKCw/r3OEaDowLCQ9dPLLpwX+yAXuTgx6oz3FTMZp+A4WQBZ0CQYIAnmKqNUjZqvEQDVgMoiVdVyhhGalKcBklIo3YpkG/kjnO8DkRBS+ebFGy6ct6BzoH/A993W1pbNm17esulFZnn9DdeascTAwICU0vNcaHX333zVsizX9QzTIHChUBweHTcMo//Qvru/99+bXnxJxuZox73jzz963hU3Khi2IYqeT5La5qV/9ZNHvvt//oKUZa5ePW6sw2SR4cKKyfE9eteTEDZ0ASTAZCxY4y98C3d5UBowyc+rZ38kG5p153XcrVD0YVrk7ha66Ouz4bhQiq1WOW+RP/fNPKBQ8CDjojChX7lXtC8v2uu5twgWcDy4Xi5+Xd8p18VM2IaT5Fyjnkz6ozJ7eODJH/Xt2Qs9wLrigDIBXM/JNGrUTcVKUDgyCJSM9jxyi2Q1Krdj6dmXs5c5vP1BImIwkwlr7ltvvHx8YiKTzfq+b9nWvT+/l7WKp+ZdduWlo2MTjuv6nu84RQJ5fl+hWPR8ZVsyZplKk+f7kmCYVjrVQCKuncl5i9deeeXpPWP7pbQnYLsKwrCkmX/sN9+HPwbtyLNvygwa8MbhuNTUiFd/we4UpAQEkWAW8fPfVMjMwdQwiNGYpv2/orG9uPZDfmY+JkdAGk02dj7AdhInnYNiAZ6hHRjr36ZySzExBtLU3sK7f8a5Pm46w88KFDyoArSGZericHbAzxIgDBg2jA7wXDN11oI/Ps/+4R3FrgzRBHO4xlYn32DU5Ca4CmSaFhcIKbysP9YH+5KPfPp9Z53W9snbbxMqwyBB0J44bf26FSsXHe7u1dq3bbvn8KFnnnoCEJdcdlljS3Pf0QHle6Zp2nY8mYwbUiYScdM0AM5k8q6TZ82e75l245995i/37rv96JHDt779xmy+4OVyRZnMew6TNaejceMDP+ze/lshW4z5zV7LpTgwAb8A34Q7pF+7D2RBFUDELEWq1Vv0Fv9wDroIbUC6+sV/hxA4+T3c58LPgU1BDrb8VJ9yHXzA8YAchMmdt+mBDNwcSIKL/MqPgBj37xcHf0gnfRi5BJOAD7hAQpGn4WagJuF48IreiNEVXyna5+PQdq4k7Cgoh9ay+dbvD6jPEy+tpHLSnYtOvftzt7z5+oXve/fns2O7pSk0mIQJnbjumvVDI+OFfNb1vOampod/9YBTmBIyedXVl46NTniu4/t+LGb97H/+a6CvV5omyDAM03eyZ52z/rwLL88Xcr6vuOhmMxPZvBNPtaYaGg7seJkIRY81TGEkBrJzf//gz0jGWQ3izE87I+3I9QCKGtuo7349ugPShgKIoIVYu94prsVEHwyGbKDJzXxwI60+V8szMToA6cNu0H1PYHSvLFzCRdbZIlkaAqq/HcVJKAeJDhp9jo9uAkk2UvqXf4WFP6aO1ZSaB7tNx1uF3QxhcXIxJmzOZ8AeRCNN9nNPF9kxLuog3x7mHIrQAE1XQVEujgCQK+2kwooLLn/333zxBhFTP//p40/+7gFpNbM/agihlblw1SkrVy3r7e1jVkQ0OjK48dFHicxTzzhvztx5/QMDrHUqlew+fOjhX/+yBMgJsn3ukiXLc/lCJpvzfb+1tXXrK89PjowYzcu//FdfgZ+vBpBkgWJoWAgRg5nz513DAxmQA0eTnaPN95cgFxCShKXZ0Gtu5oE84JCj0TaPDjzA7NGp79SHPBTHISVSTDt/ygDG++Hm4DjgEtaRyr1KSZt3PMDagTBIZWA2oWsbd71czg/CYEggT6fcqE/9b0wUoH2k56D/MR45DBGAhavMi9GfXO8EcBAHU9UTEtKKKV5x+fXv/MpXbuo6sk8XnV/97/f8/B6gGYhrLQHrpjdf4frKdR0imtPW+uLzj48O9wDxa6690nE91ym6rhuLxZ947FHARzlFoADd0rrkimuuGx6bcF1HSsnaf+bZlyBSWhfI1GTEq8lgMEExD7GXEWuuZHcZiiNEPlvNenwz9j4OJKEyQIy13br+8km5Xo8PwnCYTaIx3nEvNbQjdSUOHAHnoJKkB3DoKcBQY/vhDgLgQq7M7ee7sFqE38sHnwTFwUXWBDUEmICBqsvPAHDyDZjIQhehBFk+9v0WZMHtA4kw4IyjRQqu64ZWA7ZSLYCENEzFCy684qa77vqjTZueJa+ovEJfT8/yNTdqq13YzTEjfuE581ev7ew+clSSBgml/ccfe4IIi5effNKKk450HwGzECI7NTbU37PspHOk3aIhCLo1bV19/VWT2WIumzUMkWxIHdq/a8/uHrKkntwNSI72yWsABU0iidNv5XED3gT7RK1oyDzdtHSu0XgGYJCR7lx56ticN49vzxBlueCgeSX3/xy5HnHpnTrXAm87Ady0iPoe4Gw/KEb5CThj7CfKJX7lQWukG7nn55g6CKtFGgta2logBHQR0LpchfWZReL0S4ZiG9yeo+A8zHZwP4Z2QBIKeZCkEDgpTG/G9Y0w1bKVCSKN5oUrz/34x960Z89rubFhIQUr7wt//VdGrJkR85WyTWQzg0e6u4n9bK7Q2dm5efPLvYePgJOXbLgwkys6TtGQBglyPXX7nX+WSKRBBglDEKRBPT1HxsYmhCCtdTwee+zRjRBJUgNMZpiom0DMBCGgDZ7bCfMcTAwTuzBszgzElryn6fxPGYZBtln0saffGNp2GGqM/CysRWjO4Ol/JjOOJTehexwg1gJJzVvvZxgAw/OlGvUpVer8ImgYFhKg137NIiaUseaWj8VO/eP8hCKG9rUqJQY0e6yz46a35xB4Ao6HOR0Y/B67DD0GiBKYNajucBjdUVlzY+ZyJAEEmWBj3h23vzlTnJwcPkrQTtGTknp6+zyvSzMrraWQrusSK9/z29ranGL2wXt/SiyTTe2nn3X2+GSGIDRrInI9Hh6ZKBQHhBCGIU3Tcl2f2FdaG4axcNGix3/3wPZtg6IhqcenQAagqcy6QUxEglgmBaXb1n9oeCgOv5/NGJGEpwf3u4MHhiEkrARYoTBElGef2ZyPJSl68U6ePMIrL2KchkI3QEgupMJmHtwBGQcX2ffYG0D8DBT7AcEkEO8Q3m4e3sY6tvCmD/bM+8jE8zkUp6CLQdlOQPvwXXgjIBcuo+VUinXzzvsRS2D8AIQM6Cs4aLKrZZbjqBHmGjCUFKR0y/qLz122cmFPz2HLMt1igYhYQ8MHyPd13LYM0zCkSCbiiXh8aLDnW//yj+MjWYDeftttMBJSunYMzFx0lGWZnuvati2FJCLbsoWQhpFMpxKWJR956Ke/+e2zRudav+9lIsmsy+iSEvkfSZZpifZT3vWxvvTtvKsfdgekzcyQLsEjeJAEKC0IyVY25qOllewDePK9vP9pQrJp/Z3jU82wRiBbMH8Rbf86K4L0SlVMQYM62cqTHTBteIrmnoRt/8zeeMelH51Y9bmpHVnBRYYLKulOXS6mGozYfGbQ4vnC2qV/9ylKdfDEnipCrHaAB1doD6fZgEiHKwBmEYOZfsfbLk2nY3PbG01qUNrXGkLIUuzFoJhtOUoAsvvgrkd+88DG3//eV4l4quPDn/j09W+5ovvQ3jmtTZ7vK98DELPtYtFhwPN9w5BKG0YsNdTftXPbKxt//3D3kUnZebIa2grlhekXmYiIEOtIN6y76FOffm3NBcMvQ5wzH365OKNL2pgAk8CwO2A3orBrn7/zG3j5+8gULXvBmR/9wpFT35HbA16xxogB5lTxl6/AboBzFNIEpTh7RF5t6L61JSyEGR8r3vvLRRfcmvzsvx3eD7vZ9nWax9uhAcXQBK1JChGHcl1M7aGuv9Wb7kVqGZwh5EchZFAEpgjlLlcbySqt2KK2BFzRuTKFllMWtaZitqecSVYOkSAhSzkjZhbCBkHJ1lzRGOzaBNeBJQnxdMuChavWT47sML2+gPhRkTAAMASXugGE6SNRpOaxoztVZgyJuTIVV2P74BdRTk6GgFPC5NTJTc2rkmtOHRroRnFUKRcgwWAhmV3Wpd5ZAiwz3UJ60tm7FcU8GwZQjCcWNKy5dLIwqgpj8IuG0ay8gjvci8IhuOMAI72azA5qjpNpQTMZDXDGVc+rzatv4Hnz3JEer5hXXGDPL3deCgEmSFOkOtVIF4Z3s+dQ2yoUh3isq1SUB+nSgAkO3GgKCA5KAGCe1idMFVK0KiKj/VSIdox3gb1KtwxIgl0wQ9iAhhmDNIk84WdVvp/aV7M1B6O9YB/aLZ/WCnklyargzThME0JINcXOhC6OBTtAV9CxAX5EiKVXaE9i8ADIDZpqSrYwVKqRJoQBaYEk4MDPI9+H5oVoWoWje8p8KKVOisaFZBMfeRokAA2rkdrXcS6LYg5QkAlYJhrmYmoY+QJQLPduCkAHGMASMY+VhjAgNJHgwhQKRyEQQAUZrIlLoJQQniXaRlgVAFUwaNUhaLJUBYOwyyWaEu7DaAIEnOEKnIa1YlUMHk+SkFRe6AB1UuJULMcggpkADSJozcoB++X2m+AWS+CpysgLJgFR5qEJKdUALFPFJnH5PrUPvwSPkCAiaYEM5mifnpcPkxCDJMxUGYBOVGK2ICFKcDnmEHi1Wl4RpZQf/AJSKwFCfn/A/loWwLQe25opE9Mi4WqsTKVzJLXvAMUq6S0JIIbUKhSGAFUpzZdkSayZNWuP63DaV4QruYTNCoMMI6Iqu22VIQTEmpXLCrUDE0qFGlb1+FJLsin13RXrjzYKJgIREYQFL8eVg15aaVXTYRoCnDECPokYjIRsXqvHXo3ImLneULgKUq1uQSYymJSrMkSIJIIkVEGkF1JyMSAhYkFSoba/DBF2obISKr9AJkswZkK4kYfDWNQwHpcjy1omcgIAYUHY03D3AYC5AqcO8RxSuOWYAxQimIXNlQ4UhKc9hLuAwwR+AiQgbUCIxEKR6mB3qkoOVX1ZuHMkDKzjeg0aPB1YyBRGrJeOrHIFecacdWCCTFTRkFXGLqZoX3QobicGQyZBRhjqVkEER/qDqshFDvEHV+JFDWlDxMpIrDr93BFSq+lNB9XyB0nIQP9M60jh2s+tLI6EjINhzj0POg8/VwfdxrM3yNSWJLleQ1nNhCENIfXUQWPeOoq3AwbIDqayhsgkwn0gjEjzBSuYDTBSpXxH1d0M0btU/GGqzx4eLDHFIGLBPmWetoNmXQSqzg6TSTJSYL+2y7eWACVEFAABYYFiFGsyOs/Qk4eqjUBUbyQzH6NRGzMO5qA6tE96qltYtrngLGiGmYIwyhNHItX/8BCHENsHNBHIbg8NtKSZFotr9SMFB5MAhhGDEQ93XlAZyE81bTPTCoIVyZe8oDZIG1BBgbse80D1KUofYsJshNKxpRdQzFRj+yFkCFNccjQ52jvF00Y9HaNJj8PtkyE7rqBc1f9qfPWVZCYg4hBxCKtkhysNbjW0LZFkoMojPi/aElK3p4tqgNpRG6sh4jAagpIph1sEo1qr/mxVruiYeCcFHYahLp3aFtPq2BURg4zDaIC0Emuu14Pb4E5WeGtCb+UZSDtm7JLk8DiogJyv0qwZssySvJ6X4k0d1qIzoAhGAiIGI11KkjBVrDmFTjoFHyDZy8j0YsjEtK0dWXCeRhlV08lGMkEyPgvJZhiYHxmAEXmHbaQXwRsHZKi/KtwaFfRXCQHWZKZRUlmeTiw5w2zqLB58GlKC/QrNLpVgDBEbVzMtKCQAqkMKh3B7T+htutStSeyr/Gj+4PPN591C0oRMAwwjgURHue2NBEepfqud2mTAm6RYk0gtKOEqpi9cxe7V1aLV2zdTZKWqfMZ1iL5oJjKYcv8FKxGfY9ht2hkHGVF0MkKdGgJCQvsUnwuzGezDagRU83lvc7o26amjIB0dmUWRLgWecbK8QN35fzy9r7yiyzSgmX1Indv+O7NtUWr1evggqwlehmRMtJxSDo6EUWq5DTVFVFoGi6RGzfZ1gAJJjs5Up0o3Um3/Xg3jDstYUsabK7aEq/MiUDtQsuZsVZkXlNG6lsmBzoW6fBHqqCmjS6DZaj1VWGl2xsluYk80rDzXnL9mcstDMAjarVJWABFXn8JuHc/iBU2zVYyoIxPqM2FFUCo7kH31kbar3i9MG0YzjCTnBuBl7cVXGKlO6EKZvDMym62caeWpQ3bnWSC75FBzqD8zrHnC4ICApzqkQGMpYcVD/xhll6pHghT9iwBkvPMcnTtcJfgot/MJJkAIkAldlLGm1JJrwKSyvTBiMNuIZPvVH85te0KP7SfyQ+ReAYwKHNVAPDtVAU1vao7cPke9bGZWLgw1ufkhlvHW9dex45PdCiOhc/3e0Kv2wouTK24kIUsdPGUqhappsP2RvWbLPKNpGbQOmvoQHXNI1VR6deeGOvdBRiwpY8lpLZ7lRjCe3mdCYX+ewCyTnbH2Ff7oTlCsYllAREJAWNAutEovu6Zh5fXF0R3uxF4YSYq1s6M7zrtSpueNPnMPTF3mJAnzdVFNGwDP1Dwvprl8keAz2kfNQYW5zPVL2tH5/tHffbftqvfG58xnaiSzCUZCO5O5vQ8qTS3nfzy19PIyA4+wSJrlYy4lu6PsDCaWbwArIqN2nt60mTk1bBvEBAgzHhN2ItzOF6bmoNBzl2kiqmpQkDDAfmLJ+YqzOtcHYZQau0kYIJO1D+UnF17QftEn2WwY3/ULPzcEI0UyyaLJbmhf+JY7Bh/5gc4cIXih5E9ge7nOKNa6k26nM2bVGxFMVKMTKpMcyDScgaPJFee3rjt/9MXHKZGGnytlx/zRHe54b2LFlS3rrjcM2x09yqoAWJAGkQCDjVTslOsLu36P8tSQcLMqIpxF1Q5WEeCAJVgll1/EZtLpfhbSKJ+kacQQVYNSukK5mZ0gLGhuveQTue5N3sBrZNggAS2gXQGjYdkFLeffTsn5EzseKvY+AzIhbci4SC7gvDz51o/nXer7xT+QkWXfCTgCy5xFUc9ldrxPbWsj10Y9FKWOqBKJUVVahsgd7Oq45n22l5/sOkwxuywDYbI7VTzyrDM13rD2TXPOuTne0K5yk15uCpphJHQhkz77zf5Al5oaLGXVopNByp1wwe/BNi/1fgoJ1olll5CZKh56ikoJ6hDbYPUkUY38CCRIGIC0205KnnnL+HPfZ8+B70NzomFu+2nXt67/EDcuGdv2q+yOn+viBIwESEDYItmp/YYFp1/ScfU7dv/n51VmL+limYIdukp5RDNx1Bz7BMwsKypna6g0nyo8zlRInZ90Mv7qd31yauvLhaJHAlCFMl+QtFSmN7t/Y36oN7H0/I4Lbm056VzTTvlFx5vo54bOxNIzCnueI8sg1hRhG4n2cJdHqQaUFdKA5sTKDWSnC/ueJMMoc+QQ1fLtRyY5CSpxeRs2e9R60fuyuUln+4Pxxvkdqy5ccOn7m859u6OsoVfum9z8PyrTDSNWfq+wyW5mqzOZ7Dz7Y3fv/uVPJl+9j4wCK6cyLLSaUqRq6ME1yad6LBBihk7h2leXWTs4OqaHJIRJZpL9lkXv+cqS1Se/8Pd/6cs8cl3slQi7/fLB91xAyYalzWsub1h7Wax1vj94uDg17q25dPRb73YnjgIapCFKHaNc0arhDtUq54g02fXbb/gCm40jv7iLbBGogpq+nopPS8wCXGJoIcAwE40LP/YTffCVpG2b85cXJscGdz43tesxPb4HAAwTAaEQhA2rSSSXsd9y2Se/MDiZ2/mtjxINsp+FrkxY0RWmx6CjmadNGau/00W9/rHIbNowbRkHCXSusvNLCBNGmowlp3/+vxNjg8/9xz+JlKen9sMbh3bKFaJS+rDEoYqk1XlKYtUFDSddmGtb2+j2Jca7ckd2Z7q350Z6i7kJdkvdqVwWnqhkYoL2BmGwo1tv/BysptH7vwhLQ7lgzeF0subyuOYSbYoZi6eaki2dDQtPaVi61k0vGEwsiQ/vznVvzux+0u/fDT0JkiQFl2nUS0P/YjDTIr1UF1vOfeefJE45/ekv3s65rVAZ1m6FOZdYB53VEStMM7j/s5yA2RQRBbmJ0MCk6nA8pqQ958LLvvJfw4/9ZvN9PxJpX08dgD8JVZpQx2W0l5BMEkpDS8BMn/PW9A2fVpt/lV54UlNzuynIz06q8f7C+EBxtD8/PlSYHHHyGeVkfdeBChjohAlfz735s7DjA/f8NUwTJdYKYUJKwzQNK2ElGmMNbYnmOXZrZ7J1vtk8l2INLmhycjTfu9dYd/3QY992Xvgh4IMUpCAoLrUWV4hRhQkjLRuWKadlzYabVr791se+9Kls10NEefYLlbFaFGx/pmpPOYUy3rPMXT0eAdSQLgbqnwMGhYoMjARzMr3q5kv+8itHfvq97Rt/LZKentoPfwqqWBrAVmkXIZKQJpMtKD7v/f86+sR9xb3PieZ2s6E1MXdFau7iho75ieZ2M94IktAstKdcj31HFzOu50OT4UtnwSqH/HT3Hm1ILb2YacFOkGFLaSjDJmmAvUIuW5gYyY/0ZAaO5AcPeZMjPDmaWLSq8bpPDPzwTnbHiZ2Au76SNy+VuizIpEgu1H77stOvPufOD238128Mb/oeiQn2soHmUeWCHaPKh8YzpXTrhGPGLGvPoXxIKBwrJ/HLAwxK9VgmQLFfJEtk9vzyhW+2X/bJTyrP2/XM70V6mc4cAgO61FoT0Aqxgs8kWXu57CsPtl/9gd6uZ3Whz5k65Bx+YRwMWDBjFGs2k41GqtVItdqNbWYyLe2UmWgU8dZ4uiVLKUezne4s5EdVZmys6Hj5MS837mUzbmZU5Ub93AQXJ+HlARcADIPMGAS3X3n7xI5HOdtDpsWq1G8bJqaREBZkUqQWaa990ZqLz/mT25//8b3Dm+4hI8NuIUxqTZUyDvFxlWCOUwAz1QU4zFjCmoiYAwccPntFsuTYpu89/5+xi++8g329+8XHRcMKnTkIrwQr88E6QJ0wKw9mbGrrw+mzb0mtvTSz5ZdkV3i1XGaPCxk3D3eowkFMZWyskYRvtv7RZ9mytv/8SzAV/Cy4ROKqKhTXEARisoJUrlDsZJtWX0zxpqlNP4dhs3Jqcx8lq2ukZGqhctsWr73kok9+7KX7Hux5+OtkjrFXqIZdKHs+XC0sgXmmpa/fJ3bMSXpUr4kyMAalCVbhYjIYWpONTNfOkQE+80MfsQtO/74jIt3IqjKah2vMCntFnR1tvvSj2e2PcHm8lx+QnStAk9AkNEkmI/g2FcGLrTxHEzt7HybLIeGS9Eiq8otJUXmAuR8w9jLBEMLofNtXh1/8mdv9IglUEQXB/CeIGMwGkV6snbblZ1174Z/e8cK9Dx586O/JHGEvV3Z7yowi1SkNYTqBaMR6jENwvIPcaqs15aCgwtJUKW4DxFCKLJ3t2jrar8750IdS0u7Ztg/JRiJAeaFqe5AYNix36GBy+YVW+9LC/ifJtKG9qmPHlSqHKhOfa0Vg9lRy9cUszcKOR0A+lBNw1Femxkf5vg2TvcLcSz6A1uXDv/kyDAntVQ0hSZAFGSO7hVKLudh22pVvO+tD73rxxw8efOirZJRW363o/UpihqNsTsTh+c7HnK5d7ZI4LgFEvPFKxpvDbcXBOVCaLOR6dvbvGlr5jvcuXrr06OZdvrSEnWTfQVlrhas/htvz2pyrP+n273PH+0kiSG+FE9LhkYICmuMrLlXCcHY/AsFl/VOZEU8cIsgjEpKVTHesmHPdF3ru+5ya6ifSZVBXqQdWWDASIjmP7YWk5l709g+uuOlNT37ru92P/h+yRtkrgN1gWKiOcPtGqfWPc6JkpWd7JgHUG+NZh4COqlnLSqq5kkLWigydH9pz9JX986684ZQrL5/YdSQ7nqVkmkDQupo2YCYhVW4UWrdf/YnJV3/NAa4k5H+F2WoECQFNyVUbFISz5zHIEh6NaxnYmECCSEImJGjFu781sO2R7LYHyLRY+xAEMkrDXslqEqmFWnU0NKy8+s4/ja1Z/cTXvja0+QdkjpdXn1Ug0RBLb4XZvY7nM8sIt+qSymga8jgnq4ZpMKs6LziLXEW/aEUGvOyR3mdeNBacctb73hnPo29/H+yUiMVZ+4HTzWBNVqJwZEdqxfnNqy6c2Poo2TFoP1rYr+bmiCQ0JVdfpkk4ex6HBCrRU/XUBGP3zAQ77kk3fU4lWnvv/wIZNmsvmPRqw0iKeCfbC9htW3XmNZf+2Sf6R3LPff2uTPevSGbZr0wgChte5hrI23F91ZsnTGXePjruC1D9c1AtiISlWYLlas0TQ5uenxxRy2+7ddW6dVMHBzOTDpItQppcJv0QAEPauX3Ptl91ZyLZOLn3ZbLj0D5qE0RB0liL1KrLWRjFPY9DUtmcUni8CpWmC3GRl1x4S8P579z7vY/qUtNZyd7KpIjP4fgC9psbGlZseO+HFl17/SsPPbT9h3/t57YRFdjPAyGrWyUQR0R/Mk5QEidshCMkJTProgrOr4ZkTYMZppM5uLn3xR3pU8865ZabG6302OFB1zMRbxAyViohkRDa07lDry645YuYGs0e2UuxOMpzpUJEqiASBrSRWn0ZDCu/ayMZHEZIQpQ1u7BS7NDctZfM+6O79/zo087gATItQELGRWwOx+ezajWp/fRLbjj7jo9lfOP5b/1d//PfB/WRLrAqVmf0lPnUg2pXdaxyJeXAUabhE5snTHQiQ6BDOIYwxWww9ps5lE6uTgyA9slgL99z9Nknx3on5l9zzbqrro55crxvwvMtxBuElYAGGdKfHMv27Fn2nq9gbChz5BDF44FBrqT1JQkJLVOrLxdWLLdjIxkcGJVgirQwhZXWjpi35qLl7/qHnfd+ObfvRUo0gCwR7+DEQlbNhuxYdebl62//WOLUM1775f3bfvjl4shzZGThF8vTLivVp8oUqQp8OJJ25mgthY7D/6lOUxUnqL/q22QKl2S5FmARICoUoCHzue5tPc88N+UYS6+9ft0Vl8UhM0OOk2PYDbDSMhZ3hvvyvfuWvvOvY54/fugA7BI1RTDAQEgSJnxqWHOFsOzMjsfJKKWoSlyZFhkxstJcNJacc8Pit//1rvu/PrnrWdk0l802tuazaohZc08+9/Kzb7u96dwL9730/Jbv/O3o1gcg+gkF9ouAFxq5qANMCwe9UtMBgxXX83j8yYh4jl8A9eVRW3wKc41We5RDsCLW0D5JrfXo5O4Xu597NqfMZVffsOaKK1pb5voZykw47FtItTkjA4XevSve+efpxs6R3XuZmEyDUKYHJmlCGU2nXAYrntn+JBmlnkKDhEVmkilJ3LT2mvfOu+Eju+77xvjurWhcytwCNLZ3rDjtijef8rb3JNaesXfzlq3f/+rgi/+j3EMkcqHJ9aFJTqxpGqaBUHdkG81QAjvGOsoTtB7TT0A5ug2hMKjcBlJOXKPKp1oFVhpk2AwDXsJoWNVx7pUnXXld49yFGOkffnX3oW1bRoYH1Hg/mlNnfOQvEtrbf8/3hrpfg5EnLpD2QWDXnv9Hn9Xx5v57Pk9WjhkQktmCTrbOW73yxvf4LfO3/OjfVE+3aFnY2tq+YPUpnWecZrZ3Dg2PdL/wxNCm33ijeyAmiTxon7Vb3vVVcIOmksKnKvC0GmRFa+fHoXaONx09vTDAmFmvUUBtw7XnIZI0DSAnIjJSo1TMkTZDwo/DmpNaeu7CC67sXHd6uqmFs5mJA91Hd+2cOLgnfe7F7aed5r/20uEXN44NHYAuwtDI+ctvu0uZ4vAP/xZJEz6D4s1tCxacfmHq7EvGD/cOP/9k05x589ae2rZqudHYPDExObBz69FNG8f3vwCnD9IheKzc8gS42qFxpepuJUnH9dQO8wnk3Y4xypBmyB/xsa5FoTl9Eb8oJDoRYmUM0RKX6zmlCdkWkwFtwbeR7GxYcnr7unPaV5/WvGChYRuqb1gZqbE5KT1UFAd3T3V1TQwPexO5+Vdf5Qs18OuH7bamREOqackya806pynVPD5uFrOxjk7Pc8f6jg4d2Da2e8vU4R16qguUg1REPmtVTjdF8xYlUG1Z6Zfbn5jCbXU8G9DqdQvgxN42bWYfV3KYVMNiVgGfM1VSeNWhTyxCk+IlkQFpMAxoE8qC2Wo0LEguWNm6fGVjWwfHmrm5Pd3emoxZgiluUo7gMVoJjtaOQr7o5cdG9PiInx2fHByc6t6b7dvlT/TBHYN0IDXBL81GqmaWIikjrtQRg4paBNjD1W4Fno4Yn6nkMvvC0jRwHB+fAMJ4aubadCkhag8qScOKuxo4EyKEmwuNjCcDQnKJjlAJKBMiBitt2mlpJWUsKRMNZFiWYQshXc9Rbl4Xc6qY8Z0pz83ByUMXID0IBfJJ+wBziUu3ouWZo1MIK8zSVe+ZQ6omxHByogHwcdmAYy79cR6Fej4AhURSPi3BKHBCxDCU8ZoUGo0mqNwcGHA461LzV7ApGREUtiiRA+vKzEgOCoeRWZI1gH2uADprRt9E8mvHneY8MQHQzMgUPg69RDMPyYr6S4QaU1FuhUQAs6jFkoS52wVC86OJqF6diKuTfCoU/5XpoBxgriMKhyiavwsAvSVmFq70HcxA/En1VBBOyCOi40tHn6idIUT4VcP+cwi2zRQ4sFQx0QTiOljaChamfIBq1yHSPxJ1EKv7PciwMlPtInJYwZQNbwgaSdUeKvoDbv/SAwv+gy19bYhQvzElUkqo5pLKBDnVQV/RHC0F7FHVdQvRzEYOBJfnvXNIKsHfq4wBjJoqLtfJrFEd9P4JBKp8/DbgD/tFdSsSEUtQYWcPjfwK7/qymWCEDsf0bGD9eU1UHShGUaBsZUZMeVNTtDsofNsh15Nn1rpv9EvOHDHTia96XTtcO9ExqqCqkqDagRURnySEcQ6j5HVN3w+VuL44DIsOxBuAo4lqjurM/Stv1N7SH/wEzO4LUXQPzuImUT3pUfTkUzTyDMwDRalUwgcuhIQqIdRomhqJ0qEyYbpzGb7p4zeqNG00wOtMRczikv4Bjx7NtkemFxTCFiXowKp4i+VIpGpGmKNZ2eh+rsyMnqkv940/aT2OgjdekKm7XscqJNCsUJfZjmoleOAaxHOEVadqmxEaPohInxhVjgJHaALC5AkzRjz0+l1EOp5EsjyROvDrtA0z+AY07SxU1pYpNGlrWmmhjptRanHiWffazPfN9IZUOb0RwchjqOY39JF0fIcUdRkdaibpoV4rD2aMYphmS+jyNLgNvd79RLOqVpoBYvL6VdDxnxI6kWfgmSLqGXhoaj6DeVorfT07UxOpzBS40rEcPKLjEgnNikqnN2gD6ASP7fEnPGiGMhMdj0Gnac7M9Mz5H8KVmGmDh9f3uOChb9QI/z/8oij9DE/bCnzMyt3/l/f2OtdL/v+6pn+op/8D52f+H37x/wW89uvOCCuJGwAAAABJRU5ErkJggg==" alt="JB-DNS"></div>
           <div><div style="font-size:13.5px;font-weight:800;color:var(--on)">JB-DNS</div>
-          <div style="font-size:10.5px;color:var(--onvar);margin-top:3px">نسخهٔ ۳٫۱ · دی‌ان‌اس امن و پرسرعت</div></div>
+          <div style="font-size:10.5px;color:var(--onvar);margin-top:3px">نسخهٔ ۴٫۲ · دی‌ان‌اس امن و پرسرعت</div></div>
         </div>
       </div>
       <div class="grp stg" style="--i:5">سوالات متداول</div>
       <div class="card stg" style="--i:5" id="faq"></div>
+      <div class="grp stg" style="--i:6">پشتیبانی</div>
+      <div class="card stg" style="--i:6">
+        <div class="rw" id="chatRow">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--gradB));display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto">💬</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:800;color:var(--on)">گفتگو با پشتیبانی</div>
+            <div style="font-size:10px;color:var(--onvar);margin-top:2px">مشکل، پیشنهاد یا سؤالت را مثل چت بفرست — مستقیم به سازنده می‌رسد</div>
+          </div>
+          <div style="font-size:15px;color:var(--onvar)">‹</div>
+        </div>
+      </div>
       <div class="credit" dir="ltr">Developed By EmamShahroozJB</div>
       <div class="pad"></div>
     </section>
@@ -671,6 +858,18 @@ body{padding:0;gap:0;background:var(--bg)}
     <!-- ========== لاگ‌ها ========== -->
     <section class="pg" id="pg-logs">
       <div class="hd stg" style="--i:0"><div><h2>لاگ‌ها</h2><p>پرس‌وجوهای زندهٔ DNS</p></div></div>
+      <div class="card stg" style="--i:1;margin:0 16px 14px">
+        <div style="padding:13px 16px 4px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12.5px;font-weight:700;color:var(--on)">پرس‌وجوهای امروز</div>
+          <div style="font-size:10.5px;color:var(--onvar)">مجموع <b id="chTot" style="color:var(--primary)">۰</b></div>
+        </div>
+        <div id="ch24" style="padding:2px 10px 8px"></div>
+        <div style="padding:0 16px 10px;font-size:9.5px;color:var(--onvar);line-height:1.8">میله‌های قرمز = مسدودشده · برای ثبت نمودار، «ثبت پرس‌وجوها» باید روشن باشد</div>
+      </div>
+      <div class="card stg" style="--i:1;margin:0 16px 14px">
+        <div style="padding:13px 16px 2px;font-size:12.5px;font-weight:700;color:var(--on)">پربارش‌ترین دامنه‌ها</div>
+        <div id="topList"></div>
+      </div>
       <div id="logList" class="loglist stg" style="--i:1"></div>
       <div class="pad"></div>
     </section>
@@ -678,24 +877,117 @@ body{padding:0;gap:0;background:var(--bg)}
   <div class="scrim" id="scrim"></div>
   <div class="sheet" id="sheet">
     <div class="grab"></div>
-    <h3 id="shN">—</h3>
-    <div class="nt" id="shT"></div>
-    <div class="protos" id="shP"><button data-p="DOH">DoH</button><button data-p="DOT">DoT</button><button data-p="DNS">DNS</button></div>
-    <div class="adr" id="shA">—</div>
-    <div class="bres" id="shB"></div>
-    <button class="gbtn" id="shBench" style="margin-top:6px">سنجش سرعت این سرور</button>
-    <button class="gbtn pri" id="shUse" style="margin-top:8px">انتخاب این سرور</button>
+    <div class="sh-hero stx" style="--d:0">
+      <div class="sh-av av-GLOBAL" id="shAv">؟</div>
+      <div class="sh-hrow">
+        <h3 id="shN">—</h3>
+        <div class="sh-chips" id="shChips"></div>
+      </div>
+    </div>
+    <div class="nt stx" id="shT" style="--d:1"></div>
+    <button class="adr stx" id="shAC" style="--d:2" type="button">
+      <svg class="aic" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm7.93 9h-3.02a15.7 15.7 0 00-1.2-4.35A8.02 8.02 0 0119.93 11zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.07 13h3.02c.13 1.55.55 3.03 1.2 4.35A8.02 8.02 0 014.07 13zm3.02-2H4.07a8.02 8.02 0 014.22-4.35A15.7 15.7 0 007.09 11zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82a15.7 15.7 0 01-1.91 3.96zM14.34 13H9.66a14.7 14.7 0 010-4h4.68a14.7 14.7 0 010 4zm.37 5.35c.65-1.32 1.07-2.8 1.2-4.35h3.02a8.02 8.02 0 01-4.22 4.35z"/></svg>
+      <span class="atx" id="shA">—</span>
+      <span class="acp" id="shCP"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></span>
+    </button>
+    <div class="sh-lbl stx" style="--d:3">پروتکل</div>
+    <div class="seg stx" id="shP" style="--d:3">
+      <button data-p="DOH" type="button"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>DoH</button>
+      <button data-p="DOT" type="button"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>DoT</button>
+      <button data-p="DNSCRYPT" type="button"><svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>DNSCrypt</button>
+      <button data-p="DNS" type="button"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 00-1.38-3.56A8.03 8.03 0 0118.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 015.08 16zm2.95-8H5.08a7.987 7.987 0 013.33-3.56A15.65 15.65 0 008.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 01-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>DNS</button>
+    </div>
+    <div class="sh-acts stx" style="--d:4">
+      <button class="sh-act" id="shBench" type="button"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>سنجش سرعت</button>
+      <button class="sh-act" id="shBk" type="button"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>پشتیبان</button>
+    </div>
+    <div class="lat stx" style="--d:5">
+      <span class="lat-dot" id="shLD"></span>
+      <span class="lat-bar"><span class="lat-fill" id="shLF"></span></span>
+      <span class="lat-tx" id="shB">سنجیده نشده</span>
+    </div>
+    <button class="cta stx" id="shUse" style="--d:6" type="button">فعال‌سازی این سرور</button>
   </div>
 
   <div class="sheet" id="addSheet">
     <div class="grab"></div>
     <h3>افزودن DNS سفارشی</h3>
     <div class="nt">نام و نشانی سرور خود را وارد کنید</div>
-    <div class="protos" id="cProto"><button data-p="DNS" class="on">DNS</button><button data-p="DOH">DoH</button><button data-p="DOT">DoT</button></div>
+    <div class="protos" id="cProto"><button data-p="DNS" class="on">DNS</button><button data-p="DOH">DoH</button><button data-p="DOT">DoT</button><button data-p="DNSCRYPT">DNSCrypt</button></div>
     <input class="cin" id="cName" placeholder="نام سرور (مثلاً DNS من)">
     <input class="cin" id="cIp1" placeholder="Primary (مثلاً 8.8.8.8)" dir="ltr">
     <input class="cin" id="cIp2" placeholder="Secondary (اختیاری)" dir="ltr">
+    <input class="cin" id="dcAddr" placeholder="sdns://AQ… (از dnscrypt.info)" dir="ltr" style="display:none;margin-top:8px">
     <button class="gbtn pri" id="cSave" style="margin-top:14px">ذخیره و افزودن</button>
+  </div>
+  <!-- ========== v4.2: چت پشتیبانی (تلگرام‌مانند) ========== -->
+  <div class="chatov" id="chatOv">
+    <div class="chathd">
+      <button class="chatbk" id="chatBack">→</button>
+      <div class="chatav">J</div>
+      <div style="flex:1;min-width:0">
+        <div class="chatt">پشتیبانی JB-DNS</div>
+        <div class="chatsb"><span class="dotg"></span><span>آنلاین — معمولاً زیر چند ساعت پاسخ می‌دهیم</span></div>
+      </div>
+    </div>
+    <div class="chatbd" id="chatBody"></div>
+    <div class="chatcmp">
+      <button class="chatib" id="chatAtt">📎</button>
+      <textarea id="chatIn" rows="1" placeholder="پیامت را بنویس…"></textarea>
+      <button class="chatsnd" id="chatGo">➤</button>
+    </div>
+  </div>
+  <div class="scrim2" id="chatScrim"></div>
+  <div class="sheet" id="attSheet" style="z-index:70">
+    <div class="grab"></div>
+    <h3>📎 پیوست‌های پیام</h3>
+    <div class="nt">تنها با اجازهٔ تو همراه پیام‌ها ارسال می‌شوند — هر وقت خواستی تغییرشان بده</div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:14px">
+      <div class="fbchk" id="atDiagRow">
+        <input type="checkbox" id="atDiag" checked tabindex="-1">
+        <div><div class="t">📊 اطلاعات فنی</div>
+        <div class="s">نسخهٔ اپ و اندروید، مدل دستگاه، سرور فعال و پروتکل، وضعیت تونل، آخرین خطا — برای عیب‌یابی سریع‌تر</div></div>
+      </div>
+      <div class="fbchk" id="atLogsRow">
+        <input type="checkbox" id="atLogs" tabindex="-1">
+        <div><div class="t">📜 ۲۰ لاگ اخیر</div>
+        <div class="s">دامنه‌های پرس‌وجوی اخیر — برای رفع مشکل‌های مسدودسازی؛ پیش‌فرض خاموش است</div></div>
+      </div>
+      <input class="cin" id="atContact" placeholder="راه تماس (اختیاری — ایمیل یا آی‌دی تلگرام)" dir="rtl">
+      <div style="font-size:9px;color:var(--onvar);line-height:1.9">🔒 فقط همین‌ها ذخیره می‌شوند؛ آی‌پی تو هرگز به‌صورت خام ذخیره نمی‌شود و گفتگو پس از ۹۰ روز خودکار پاک می‌شود.</div>
+      <button class="gbtn pri" id="attDone">تأیید</button>
+    </div>
+  </div>
+  <div class="sheet" id="hlSheet">
+    <div class="grab"></div>
+    <h3>🩺 تست سلامت DNS</h3>
+    <div class="nt">بررسی زندهٔ رمزنگاری، دستکاری سانسورگر و مسدودسازی</div>
+    <div id="hlList" style="margin-top:14px"></div>
+    <button class="gbtn pri" id="hlRun" style="margin-top:12px">اجرای دوبارهٔ تست</button>
+  </div>
+
+  <div class="sheet" id="batSheet">
+    <div class="grab"></div>
+    <h3>🔋 جلوگیری از بسته‌شدن JB-DNS</h3>
+    <div class="nt" id="batNt">گام‌های پیشنهادی برای گوشی شما</div>
+    <div id="batList" style="margin-top:14px"></div>
+  </div>
+
+  <div class="sheet" id="rwSheet">
+    <div class="grab"></div>
+    <h3>بازنویسی DNS</h3>
+    <div class="nt">دامنه را به IP ثابت وصل کنید — پاسخ فوری و آفلاین</div>
+    <input class="cin" id="rwDom" placeholder="دامنه (مثلاً mydevice.local)" dir="ltr">
+    <input class="cin" id="rwIp" placeholder="IP (مثلاً 192.168.1.50)" dir="ltr" style="margin-top:8px">
+    <button class="gbtn pri" id="rwSave" style="margin-top:12px">ذخیرهٔ قاعده</button>
+  </div>
+
+  <div class="sheet" id="logSheet">
+    <div class="grab"></div>
+    <h3 id="lgD" style="direction:ltr;text-align:right">—</h3>
+    <div class="nt">با این دامنه چکار کنیم؟</div>
+    <button class="gbtn" id="lgBlock" style="margin-top:6px">🚫 برای همیشه مسدودش کن</button>
+    <button class="gbtn" id="lgAllow" style="margin-top:8px">✅ هرگز مسدود نشود (استثنا)</button>
   </div>
   <div class="sheet" id="appsSheet">
     <div class="grab"></div>
@@ -749,12 +1041,13 @@ const BL=new Set(["doubleclick.net","googlesyndication.com","googleadservices.co
 const AD=[...BL],OK=["www.google.com","github.com","cdn.jsdelivr.net","fonts.gstatic.com","wikipedia.org","stackoverflow.com","digikala.com","snapp.ir","aparat.com","one.one.one.one"];
 const P="۰۱۲۳۴۵۶۷۸۹",fa=s=>String(s).replace(/[0-9]/g,d=>P[d]),$=i=>document.getElementById(i);
 const so=i=>S.find(x=>x.id===i)||S[0];
-const po=s=>ST.proto[s.id]||(s.doh?"DOH":s.dot?"DOT":"DNS");
+const po=s=>ST.proto[s.id]||(s.sdns?"DNSCRYPT":s.doh?"DOH":s.dot?"DOT":"DNS");
 const hostOf=u=>{try{return new URL(u).host}catch(e){return u||""}};
-const ao=(s,p)=>p==="DOH"?hostOf(s.doh):p==="DOT"?(s.dot||""):(s.dns||[]).join("، ");
+const ao=(s,p)=>p==="DOH"?hostOf(s.doh):p==="DOT"?(s.dot||""):p==="DNSCRYPT"?"رمزنگاری سرتاسری · نشانی sdns://":(s.dns||[]).join("، ");
 
+let PDNS=false,BK=new Set(),lgDomain=null,CAT=[],RW=[],BAT=null;
 const ST={on:false,busy:false,started:0,q:0,b:0,srv:"shecan",proto:{},theme:"system",
-  block:true,sinkhole:false,ipv6:false,verify:true,fallback:true,autostart:false};
+  block:true,sinkhole:false,ipv6:true,verify:true,fallback:false,autostart:false,sound:true,race:false};
 
 /* ---------- ناوبری با indicator کشویی ---------- */
 const ORDER=["home","servers","settings","logs"];
@@ -777,7 +1070,7 @@ function go(p){
   if(!fwd){to.style.transform="translateX(-26px) scale(.985)";void to.offsetWidth;to.style.transform=""}
   to.classList.add("on");
   [...$("nav").querySelectorAll(".navbtn")].forEach(b=>b.classList.toggle("on",b.dataset.p===p));
-  navInd(p);to.scrollTop=0;cur=p;if(p==="servers")loadServers();
+  navInd(p);to.scrollTop=0;cur=p;if(p==="servers")loadServers();if(p==="logs")refreshStats();
 }
 $("nav").addEventListener("click",e=>{const b=e.target.closest(".navbtn");if(b)go(b.dataset.p)});
 $("goSrv").addEventListener("click",()=>{const b=$("goSrv");if(b.classList.contains("busy"))return;
@@ -816,11 +1109,17 @@ if(AND){try{
   const cfg=JSON.parse(AND.getSettings());
   for(const k of ["block","sinkhole","ipv6","verify","fallback","autostart"])if(typeof cfg[k]==="boolean")ST[k]=cfg[k];
   if(typeof cfg.split==="boolean")SPLIT=cfg.split;
+  if(typeof cfg.sound==="boolean")ST.sound=cfg.sound;
+  if(typeof cfg.pdns==="boolean")PDNS=cfg.pdns;
+  if(Array.isArray(cfg.backups))BK=new Set(cfg.backups);
+  if(typeof cfg.race==="boolean")ST.race=cfg.race;
   if(cfg.srv)ST.srv=cfg.srv;if(cfg.theme)ST.theme=cfg.theme;
   if(cfg.proto)ST.proto=cfg.proto;
   const cs=JSON.parse(AND.customServers()||"[]");
   cs.forEach(x=>{if(x&&x.id&&!S.some(y=>y.id===x.id))S.push(x)});
-}catch(e){}}
+}catch(e){}
+try{const cat=JSON.parse(AND.getCatalog()||"[]");if(cat.length)CAT=cat}catch(e){}
+try{RW=JSON.parse(AND.getRewrites()||"[]")}catch(e){RW=[]}}
 /* نتیجهٔ سنجش واقعی سرورها که از کاتلین push می‌شود */
 const BENCH_BTN_HTML=document.getElementById("benchBtn")?document.getElementById("benchBtn").innerHTML:"";
 let benchQueue=null,benchBtnSrv=null;
@@ -832,7 +1131,8 @@ window.__bench=r=>{if(!r||!r.id)return;
     if(lm){lm.classList.add("on");lm.textContent=r.ok?fa(r.medianMs)+" ms":(s&&s.ir?"داخل ایران":(String(r.error||"خطا").slice(0,26)));
       lm.classList.remove("pop");void lm.offsetWidth;lm.classList.add("pop")}}
   if(typeof sid!=="undefined"&&sid===r.id&&document.getElementById("sheet").classList.contains("on")&&s){
-    document.getElementById("shB").textContent=r.ok?("میانهٔ "+fa(r.medianMs)+" ms · موفق "+fa(r.answered)+" از "+fa(r.total)):(s&&s.ir?"در دسترس نیست — فقط از داخل ایران پاسخ می‌دهد":("سنجش ناموفق: "+(r.error||"—")))}
+    if(r.ok)latSet(r.medianMs|0,"میانهٔ "+fa(r.medianMs)+" ms · موفق "+fa(r.answered)+" از "+fa(r.total));
+    else latErr(s&&s.ir?"در دسترس نیست — فقط از داخل ایران پاسخ می‌دهد":"سنجش ناموفق: "+(r.error||"—"))}
   if(benchBtnSrv===r.id){benchBtnSrv=null;const bb=document.getElementById("benchBtn");if(bb)bb.innerHTML=BENCH_BTN_HTML;
     snk(r.ok?("میانهٔ پاسخ "+(s?s.n:r.id)+" — "+fa(r.medianMs)+" ms"):("سنجش ناموفق: "+(r.error||"—")))}
   if(benchQueue){benchQueue.left--;
@@ -840,7 +1140,238 @@ window.__bench=r=>{if(!r||!r.id)return;
 window.__benchDone=()=>{if(benchQueue){const d=benchQueue.done;benchQueue=null;d&&d()}};
 function renderLogs(list){const el=$("logList");if(!el)return;
   if(!list||!list.length){el.innerHTML='<div class="logempty">هنوز پرس‌وجویی ثبت نشده — متصل شوید</div>';return}
-  el.innerHTML=list.map(e=>`<div class="logrow ${e.s}"><div class="ld">${e.d}</div><div class="lm2">${e.ms}ms</div><span class="ls">${e.s}</span></div>`).join("")}
+  el.innerHTML=list.map(e=>`<div class="logrow ${e.s}" data-d="${e.d}"><div class="ld">${e.d}</div><div class="lm2">${e.ms}ms</div><span class="ls">${e.s}</span></div>`).join("");
+  el.querySelectorAll("[data-d]").forEach(r=>r.addEventListener("click",()=>openDomainSheet(r.dataset.d)))}
+
+/* باز کردن شیت کنترل مسدودسازی برای یک دامنه (از لاگ یا پربارش‌ترین‌ها) */
+function openDomainSheet(d){
+  if(!d)return;lgDomain=d;
+  $("lgD").textContent=d;
+  $("scrim").classList.add("on");$("logSheet").classList.add("on")}
+$("lgBlock").addEventListener("click",()=>{
+  if(!lgDomain)return;
+  if(AND){try{const n=AND.addBlockedDomain(lgDomain);snk("«"+lgDomain+"» مسدود شد — مجموع "+fa(n)+" دامنهٔ دلخواه"+(ST.on?" · اعمال شد":""))}catch(e){snk("خطا در ذخیره")}}
+  else snk("فقط در برنامهٔ اندرویدی فعال است");
+  close()});
+$("lgAllow").addEventListener("click",()=>{
+  if(!lgDomain)return;
+  if(AND){try{AND.addAllowDomain(lgDomain,true);snk("«"+lgDomain+"» استثنا شد — هرگز مسدود نمی‌شود"+(ST.on?" · اعمال شد":""))}catch(e){snk("خطا در ذخیره")}}
+  else snk("فقط در برنامهٔ اندرویدی فعال است");
+  close()});
+/* ---------- v4.0: کاتالوگ فهرست‌های آماده ---------- */
+function renderCatalog(){
+  const el=$("catList");if(!el)return;
+  if(!CAT.length)CAT=[{id:"ads",t:"تبلیغات",d:"شبکه‌های تبلیغاتی جهانی و ایرانی",count:2705,on:true},
+    {id:"trackers",t:"ردیاب‌ها",d:"تحلیلگرها و فینگرپرینت‌ها (Analytics/SDK)",count:138,on:true},
+    {id:"malware",t:"بدافزار",d:"دامنه‌های فعال مخرب (URLhaus)",count:4042,on:true},
+    {id:"family",t:"خانواده",d:"محتوای بزرگسال و TLDهای ویژه",count:84,on:false}];
+  el.innerHTML=CAT.map(c=>`<div class="rw" data-c="${c.id}"><div style="flex:1"><div class="t">${c.t} <span style="color:var(--primary);font-size:10px;font-weight:800">${fa(c.count)} دامنه</span></div><div class="s">${c.d}</div></div><span class="switch ${c.on?"on":""}"><input class="togglesw" type="checkbox" tabindex="-1" ${c.on?"checked":""}><span class="indicator left"></span><span class="indicator right"></span><span class="button"></span></span></div>`).join("")}
+$("catList").addEventListener("click",e=>{const r=e.target.closest(".rw");if(!r)return;
+  const c=CAT.find(x=>x.id===r.dataset.c);if(!c)return;c.on=!c.on;
+  r.querySelector(".togglesw").checked=c.on;const sw=r.querySelector(".switch");if(sw)sw.classList.toggle("on",c.on);
+  if(AND){try{AND.setCatalog(c.id,c.on)}catch(e){}}
+  snk((c.on?"روشن":"خاموش")+" شد: "+c.t+(ST.on?" · روی تونل اعمال شد":""))});
+
+/* ---------- v4.0: بازنویسی DNS (Cloaking) ---------- */
+function renderRewrites(){
+  const el=$("rwList");if(!el)return;
+  el.innerHTML=RW.length?RW.map(r=>`<div class="rwrow"><div style="flex:1;min-width:0"><div style="font-size:11.5px;font-weight:700;color:var(--on);direction:ltr;text-align:right;word-break:break-all">${r.d}</div><div style="font-size:10px;color:var(--primary);font-weight:700;direction:ltr;text-align:right">${r.ip}</div></div><button class="rwdel" data-rd="${r.d}" title="حذف">✕</button></div>`).join("")
+  :'<div style="padding:12px 16px;font-size:10.5px;color:var(--onvar);line-height:1.9">هنوز قاعده‌ای نیست — مثلاً mydevice.local را به 192.168.1.50 وصل کنید</div>'}
+$("rwAdd").addEventListener("click",()=>{$("rwDom").value="";$("rwIp").value="";
+  $("scrim").classList.add("on");$("rwSheet").classList.add("on")});
+$("rwSave").addEventListener("click",()=>{
+  const d=$("rwDom").value.trim().toLowerCase().replace(/\.$/,""),ip=$("rwIp").value.trim();
+  if(!d||!d.includes(".")||!ip){snk("دامنه و IP را کامل وارد کنید");return}
+  if(!(/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)&&ip.split(".").every(p=>+p<256))){snk("نشانی IPv4 نامعتبر است");return}
+  if(AND){try{AND.setRewrite(d,ip,true)}catch(e){}}
+  if(RW.some(r=>r.d===d))RW=RW.map(r=>r.d===d?{d:d,ip:ip}:r);else RW.push({d:d,ip:ip});
+  renderRewrites();close();snk("قاعدهٔ بازنویسی ذخیره شد"+(ST.on?" · فوری اعمال می‌شود":""))});
+$("rwList").addEventListener("click",e=>{const b=e.target.closest("[data-rd]");if(!b)return;
+  const d=b.dataset.rd;
+  if(AND){try{AND.setRewrite(d,"",false)}catch(e){}}
+  RW=RW.filter(r=>r.d!==d);renderRewrites();snk("قاعدهٔ بازنویسی حذف شد")});
+
+/* ---------- v4.0: نمودار ۲۴ ساعته و پربارش‌ترین‌ها ---------- */
+function chartSvg(q,b){
+  const W=320,H=96,bw=W/24,max=Math.max(1,...q);
+  let s='<defs><linearGradient id="blkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5484D"/><stop offset="1" stop-color="#B3383C"/></linearGradient></defs>';
+  for(let i=0;i<24;i++){
+    const hq=Math.max(1,Math.round(q[i]/max*(H-20)));
+    const hb=Math.round((b[i]||0)/max*(H-20));
+    const x=i*bw+2;
+    s+=`<rect x="${x}" y="${H-13-hq}" width="${bw-4}" height="${hq}" rx="2" fill="rgba(72,202,228,.30)"/>`;
+    if(hb>0)s+=`<rect x="${x}" y="${H-13-hb}" width="${bw-4}" height="${hb}" rx="2" fill="url(#blkg)"/>`;
+    if(i%6===0)s+=`<text x="${i*bw+bw/2}" y="${H-2}" font-size="7" fill="var(--onvar)" text-anchor="middle" font-family="inherit">${fa(i)}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" preserveAspectRatio="none">${s}</svg>`}
+function refreshStats(){
+  const el=$("ch24"),tl=$("topList");if(!el)return;
+  let q=[],b=[],top=[];
+  if(AND){try{const s=JSON.parse(AND.stats24());q=s.q||[];b=s.b||[];top=s.top||[]}catch(e){}}
+  if(!q.length){for(let i=0;i<24;i++){q[i]=Math.max(0,Math.round(6+10*Math.sin(i/3.5)+(Math.random()*8)));b[i]=Math.random()<.25?(Math.random()*q[i])|0:0}
+    top=[{d:"instagram.com",n:214},{d:"api.telegram.org",n:168},{d:"digikala.com",n:96},{d:"cdn.jsdelivr.net",n:61}]}
+  el.innerHTML=chartSvg(q,b);
+  $("chTot").textContent=fa(q.reduce((a,c)=>a+c,0));
+  if(top.length){
+    tl.innerHTML=top.map(t=>`<div class="toprow" data-d="${t.d}"><div class="tdom">${t.d}</div><span class="topbar"><i style="width:${Math.min(100,Math.round(t.n/top[0].n*100))}%"></i></span><span class="tcnt">${fa(t.n)}×</span></div>`).join("");
+    tl.querySelectorAll("[data-d]").forEach(r=>r.addEventListener("click",()=>openDomainSheet(r.dataset.d)))}
+  else tl.innerHTML='<div style="padding:10px 16px;font-size:10.5px;color:var(--onvar);line-height:1.9">پس از اتصال و چند پرس‌وجو، پربارش‌ترین دامنه‌ها اینجا نشان داده می‌شوند</div>'}
+setInterval(()=>{if(cur==="logs")refreshStats()},4000);
+
+/* ---------- v4.0: تست سلامت (الگوی Intra) ---------- */
+function hlRender(cs){
+  const el=$("hlList");if(!el)return;
+  if(!cs||!cs.length){el.innerHTML='<div style="padding:14px 4px;color:#E5484D;font-size:11.5px;line-height:2">تست شروع نشد — دوباره تلاش کنید</div>';return}
+  el.innerHTML=cs.map((c,i)=>`<div class="hlrow" style="animation-delay:${i*70}ms"><span class="hlic ${c.ok?"ok":"bad"}">${c.ok?"✓":"✗"}</span><div style="flex:1;min-width:0"><div class="hlt">${c.t}</div><div class="hld">${c.d}</div></div></div>`).join("")}
+function openHealth(){
+  $("hlList").innerHTML='<div style="padding:18px 4px;text-align:center;color:var(--onvar);font-size:11.5px;line-height:2.2">در حال بررسی…<br>چند پرس‌وجوی واقعی ارسال می‌شود</div>';
+  $("scrim").classList.add("on");$("hlSheet").classList.add("on");
+  if(AND){try{AND.runHealthCheck()}catch(e){hlRender(null)}}
+  else setTimeout(()=>hlRender([
+    {t:"تونل DNS فعال است",ok:ST.on,d:ST.on?"پرس‌وجوهای دستگاه از تونل می‌گذرند":"ابتدا دکمهٔ اتصال را بزنید"},
+    {t:"رمزنگاری سرتاسر",ok:true,d:"پرس‌وجوها با "+po(so(ST.srv))+" رمزنگاری می‌شوند"},
+    {t:"پاسخ‌گویی سرور DNS",ok:true,d:"پاسخ در ۳۸ms ← 104.21.5.33"},
+    {t:"عدم دستکاری پاسخ‌ها",ok:true,d:"پاسخ دامنهٔ تست، تمیز و بدون IP فیلترینگ بود"},
+    {t:"مسدودسازی تبلیغات کار می‌کند",ok:ST.block,d:ST.block?"دامنهٔ تست تبلیغاتی مسدود شد":"فهرست مسدودسازی خاموش است"},
+    {t:"«Private DNS» اندروید در حالت عادی",ok:!PDNS,d:PDNS?"حالت Strict فعال است — نشت DNS":"پرس‌وجوهای سیستم از تونل می‌گذرند"}]),1100)}
+window.__health=cs=>hlRender(cs);
+$("hlBtn").addEventListener("click",openHealth);
+$("hlRun").addEventListener("click",openHealth);
+
+/* ---------- v4.0: ویزارد باتری/اجرای خودکار ---------- */
+$("rowBat").addEventListener("click",()=>{
+  if(AND){try{BAT=JSON.parse(AND.getBatterySteps())}catch(e){BAT=null}}
+  if(!BAT||!BAT.steps||!BAT.steps.length)
+    BAT={mfr:"demo",known:true,steps:[
+      {t:"حذف از بهینه‌سازی باتری",d:"در فهرست برنامه‌ها، JB-DNS را پیدا و روی «بدون محدودیت / Unrestricted» بگذارید",kind:"battery"},
+      {t:"اجرای خودکار",d:"در تنظیمات امنیت یا باتری، شروع خودکار JB-DNS را روشن کنید",kind:"info"},
+      {t:"قفل در برنامه‌های اخیر",d:"در فهرست Recent، روی آیکون JB-DNS نگه دارید و Lock را بزنید",kind:"info"}]};
+  $("batNt").textContent=BAT.known?("گام‌های پیشنهادی برای "+BAT.mfr):("گام‌های عمومی اندروید — سازنده: "+BAT.mfr);
+  $("batList").innerHTML=BAT.steps.map((s,i)=>`<div class="batrow"><span class="bnum">${fa(i+1)}</span><div style="flex:1;min-width:0"><div class="hlt">${s.t}</div><div class="hld">${s.d}</div>${s.kind&&s.kind!=="info"?`<button class="gbtn" data-bi="${i}" style="margin-top:8px;padding:9px 12px">باز کردن تنظیمات</button>`:""}</div></div>`).join("");
+  $("batList").querySelectorAll("[data-bi]").forEach(btn=>btn.addEventListener("click",()=>{
+    if(AND){try{const r=AND.openBatteryStep(+btn.dataset.bi);
+      snk((r==="component"||r==="battery")?"صفحهٔ تنظیمات باز شد":"صفحهٔ مربوطه روی این گوشی در دسترس نیست — دستی باز کنید")}
+      catch(e){snk("باز نشد")}}
+    else snk("فقط در برنامهٔ اندرویدی فعال است")}));
+  $("scrim").classList.add("on");$("batSheet").classList.add("on")});
+
+/* ---------- v4.0: پشتیبان‌گیری و بازیابی ---------- */
+$("bkEx").addEventListener("click",()=>{
+  if(!AND){snk("فقط در برنامهٔ اندرویدی فعال است");return}
+  try{AND.exportSettings();snk("فایل پشتیبان ساخته شد — از پنجرهٔ اشتراک، جایی ذخیره‌ش کنید")}
+  catch(e){snk("خروجی ناموفق بود")}});
+$("bkIm").addEventListener("click",()=>{
+  if(!AND){snk("فقط در برنامهٔ اندرویدی فعال است");return}
+  try{AND.pickBackupFile()}catch(e){snk("باز کردن انتخاب‌گر فایل ممکن نشد")}});
+window.__imported=n=>{snk("بازیابی شد — "+fa(n|0)+" تنظیم اعمال شد")};
+
+/* ---------- v4.2: چت پشتیبانی (تلگرام‌مانند، دوطرفه) ---------- */
+function FeedbackValidate(t){
+  if(t.length<5)return "یک کمی بیشتر توضیح بده (حداقل ۵ حرف)";
+  if(t.length>4000)return "متن گزارش خیلی بلند است";
+  return null}
+const CHAT={
+  id:(()=>{let s=localStorage.getItem("jb.chatId");
+    if(!s){const b=crypto.getRandomValues(new Uint8Array(8));
+      s=[...b].map(x=>x.toString(16).padStart(2,"0")).join("");
+      localStorage.setItem("jb.chatId",s)}
+    return s})(),
+  msgs:[],ids:new Set(),after:"1970-01-01T00:00:00.000Z",timer:null,read:false,busy:false,demo:false,
+  att:{diag:localStorage.getItem("jb.cd")!=="0",logs:localStorage.getItem("jb.cl")==="1",
+       contact:localStorage.getItem("jb.cc")||""}};
+function chatEsc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function chatHM(iso){try{return new Date(iso).toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"})}catch(e){return""}}
+function chatDay(iso){const x=new Date(iso);x.setHours(0,0,0,0);const t=new Date();t.setHours(0,0,0,0);
+  const df=Math.round((t-x)/86400000);
+  if(df===0)return "امروز";if(df===1)return "دیروز";
+  try{return new Date(iso).toLocaleDateString("fa-IR",{day:"numeric",month:"long"})}catch(e){return""}}
+function chatAttHtml(m){if(!m.meta)return "";let h="";
+  if(m.meta.diagnostics)h+='<details class="chatatt"><summary>📊 اطلاعات فنی</summary><div class="d">'+chatEsc(JSON.stringify(m.meta.diagnostics,null,1))+'</div></details>';
+  if(m.meta.logs)h+='<details class="chatatt"><summary>📜 لاگ‌های اخیر ('+fa(m.meta.logs.length)+')</summary><div class="d">'+chatEsc(m.meta.logs.join("\n"))+'</div></details>';
+  return h}
+function chatRender(){
+  const b=$("chatBody");if(!b)return;
+  let last="";const out=[];
+  for(const m of CHAT.msgs){
+    const d=chatDay(m.time);if(d&&d!==last){out.push('<div class="chatday">'+d+'</div>');last=d}
+    if(m.sender==="bot"){out.push('<div class="chatmsg chatbot">'+chatEsc(m.text).replace(/\n/g,"<br>")+'</div>');continue}
+    const me=m.sender==="user";
+    let tick="";
+    if(me){const st=m.failed?"⚠":(m.pending?"⏱":(CHAT.read?"✓✓":"✓"));
+      tick='<span class="chattick'+(CHAT.read&&!m.pending&&!m.failed?" rd":"")+'">'+st+'</span>'}
+    out.push('<div class="chatmsg '+(me?"chatme":"chatin")+(m.failed?" chatfail":"")+'">'
+      +chatEsc(m.text).replace(/\n/g,"<br>")+chatAttHtml(m)
+      +'<div class="chatfoot"><span>'+chatHM(m.time)+'</span>'+tick+'</div></div>')}
+  b.innerHTML=out.join("");b.scrollTop=b.scrollHeight}
+function chatMerge(list,read){
+  if(read!==undefined)CHAT.read=read;
+  for(const m of (list||[])){
+    if(CHAT.ids.has(m.id))continue;
+    if(m.sender==="user"){
+      const i=CHAT.msgs.findIndex(x=>x.pending&&x.text===m.text);
+      if(i>=0)CHAT.msgs.splice(i,1)}
+    CHAT.ids.add(m.id);CHAT.msgs.push(m);
+    if(m.time>CHAT.after)CHAT.after=m.time}
+  if(CHAT.msgs.length>250)CHAT.msgs.splice(0,CHAT.msgs.length-250);
+  chatRender()}
+window.__chatSend=r=>{
+  CHAT.busy=false;const g=$("chatGo");if(g)g.disabled=false;
+  const p=CHAT.msgs.find(m=>m.pending);
+  if(r&&r.ok){if(p){p.pending=false;p.failed=false;p.id=r.id||p.id;p.time=r.time||p.time;CHAT.ids.add(p.id)}chatRender()}
+  else{if(p){p.pending=false;p.failed=true}chatRender();snk((r&&r.error)||"ارسال ناموفق — دوباره امتحان کن")}};
+window.__chatPoll=r=>{if(r&&r.ok)chatMerge(r.messages,r.read)};
+function chatPollNow(){if(AND){try{AND.chatPoll(CHAT.id,CHAT.after)}catch(e){}}}
+function chatDemoOpen(){
+  if(CHAT.demo)return;CHAT.demo=true;
+  setTimeout(()=>window.__chatPoll({ok:true,read:false,messages:[{id:"dw",time:new Date(Date.now()-3600e3).toISOString(),sender:"bot",
+    text:"سلام! 👋\nاین گفتگو مستقیم به سازندهٔ JB-DNS وصل است — مشکلت، پیشنهادت یا سؤالت را مثل تلگرام بفرست تا در اولین فرصت پاسخ بگیری.\n\n📎 با دکمهٔ پیوست می‌توانی «اطلاعات فنی» و «لاگ‌های اخیر» را هم همراه پیام بفرستی (اختیاری).\n🔒 فقط همان چیزی که خودت می‌فرستی ذخیره می‌شود."}]}),400)}
+function chatOpen(){
+  $("chatOv").classList.add("on");chatSyncAtt();chatRender();
+  if(AND)chatPollNow();else chatDemoOpen();
+  if(CHAT.timer)clearInterval(CHAT.timer);
+  CHAT.timer=setInterval(chatPollNow,15000)}
+function chatClose(){
+  $("chatOv").classList.remove("on");
+  if(CHAT.timer){clearInterval(CHAT.timer);CHAT.timer=null}}
+function chatSubmit(){
+  const inp=$("chatIn"),t=inp.value.trim();
+  const err=FeedbackValidate(t);if(err){snk(err);return}
+  if(CHAT.busy){snk("پیام قبلی هنوز در راه است…");return}
+  CHAT.msgs.push({id:"tmp"+Date.now(),time:new Date().toISOString(),sender:"user",text:t,pending:true});
+  inp.value="";inp.style.height="auto";chatRender();
+  if(AND){
+    CHAT.busy=true;$("chatGo").disabled=true;
+    try{
+      if(!AND.chatSend(JSON.stringify({chat:CHAT.id,text:t,contact:CHAT.att.contact,diag:CHAT.att.diag,logs:CHAT.att.logs})))
+        window.__chatSend({ok:false,error:"ارسال شروع نشد"})
+    }catch(e){window.__chatSend({ok:false,error:"خطای داخلی"})}
+    setTimeout(()=>{const p=CHAT.msgs.find(m=>m.pending);
+      if(p){p.pending=false;p.failed=true;CHAT.busy=false;$("chatGo").disabled=false;chatRender();
+        snk("پاسخی از سرور نیامد — بعداً دوباره امتحان کن")}},30000)}
+  else{
+    setTimeout(()=>window.__chatSend({ok:true,id:"d"+Date.now().toString(16),time:new Date().toISOString()}),650);
+    setTimeout(()=>window.__chatPoll({ok:true,read:true,messages:[{id:"dr"+Math.random().toString(16).slice(2,8),
+      time:new Date().toISOString(),sender:"admin",
+      text:"پیامت رسید، ممنون! 🙏 این پاسخ نمایشی است — در نسخهٔ نصب‌شده، پاسخ واقعی سازنده همین‌جا می‌آید."}]}),2600)}}
+function chatSyncAtt(){
+  $("atDiag").checked=CHAT.att.diag;$("atLogs").checked=CHAT.att.logs;$("atContact").value=CHAT.att.contact}
+function attClose(){$("chatScrim").classList.remove("on");$("attSheet").classList.remove("on")}
+$("chatRow").addEventListener("click",chatOpen);
+$("chatBack").addEventListener("click",chatClose);
+$("chatGo").addEventListener("click",chatSubmit);
+$("chatIn").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();chatSubmit()}});
+$("chatIn").addEventListener("input",function(){this.style.height="auto";this.style.height=Math.min(92,this.scrollHeight)+"px"});
+$("chatAtt").addEventListener("click",()=>{chatSyncAtt();$("chatScrim").classList.add("on");$("attSheet").classList.add("on")});
+$("chatScrim").addEventListener("click",attClose);
+$("attDone").addEventListener("click",()=>{
+  CHAT.att.diag=$("atDiag").checked;CHAT.att.logs=$("atLogs").checked;CHAT.att.contact=$("atContact").value.trim();
+  localStorage.setItem("jb.cd",CHAT.att.diag?"1":"0");
+  localStorage.setItem("jb.cl",CHAT.att.logs?"1":"0");
+  localStorage.setItem("jb.cc",CHAT.att.contact);
+  attClose();snk(CHAT.att.diag||CHAT.att.logs?"پیوست‌ها ذخیره شد ✓":"پیوست‌ها خاموش شد")});
+$("atDiagRow").addEventListener("click",e=>{if(e.target.id!=="atDiag")$("atDiag").checked=!$("atDiag").checked});
+$("atLogsRow").addEventListener("click",e=>{if(e.target.id!=="atLogs")$("atLogs").checked=!$("atLogs").checked});
+
 function applyState(st){if(!st)return;
   const was=ST.on;ST.on=!!st.on;ST.q=st.q|0;ST.b=st.b|0;
   if(st.sid&&st.sid!==ST.srv){ST.srv=st.sid;sync();render()}
@@ -919,7 +1450,7 @@ function render(){
     l.forEach((s,i)=>{
       const p=po(s),sel=s.id===ST.srv;
       h+=`<div class="srow stg ${sel?"sel":""}" data-id="${s.id}" style="--i:${i}">
-        <div class="tx"><div class="n">${s.n}${s.ir?'<i class="irchip">داخل ایران</i>':""}</div></div>
+        <div class="tx"><div class="n">${s.n}${s.ir?'<i class="irchip">داخل ایران</i>':""}${BK.has(s.id)?'<i class="irchip" style="background:rgba(43,182,115,.15);color:#2BB673">پشتیبان</i>':""}</div></div>
         <span class="lm ${s.lat?"on":""}">${s.lat?fa(s.lat)+" ms":""}</span>
         <span class="pb">${p}</span>
         <span class="cbx"><input type="checkbox" tabindex="-1" ${sel?"checked":""}><svg viewBox="0 0 64 64"><path class="path" pathLength="575.0541381835938" d="M 0 16 V 56 A 8 8 90 0 0 8 64 H 56 A 8 8 90 0 0 64 56 V 8 A 8 8 90 0 0 56 0 H 8 A 8 8 90 0 0 0 8 V 16 L 32 48 L 64 16 V 8 A 8 8 90 0 0 56 0 H 8 A 8 8 90 0 0 0 8 V 56 A 8 8 90 0 0 8 64 H 56 A 8 8 90 0 0 64 56 V 16"/></svg></span>
@@ -934,28 +1465,77 @@ $("srvList").addEventListener("click",e=>{const c=e.target.closest(".srow");if(c
 let sid=null;
 function open(id){
   sid=id;const s=so(id),p=po(s);
-  $("shN").textContent=s.n;$("shT").textContent=s.t+(s.ir?" · فقط از داخل شبکهٔ ایران پاسخ می‌دهد":"");
+  $("shN").textContent=s.n;$("shT").textContent=s.t;
+  const av=$("shAv");av.textContent=(s.n||"؟").trim().charAt(0);av.className="sh-av av-"+(s.g||"CUSTOM");
+  let ch="";
+  if(s.ir)ch+='<i class="chmini chir">فقط داخل ایران</i>';
+  if(BK.has(id))ch+='<i class="chmini chbk">در زنجیرهٔ پشتیبان</i>';
+  if(s.id===ST.srv)ch+='<i class="chmini chon">سرور فعال</i>';
+  $("shChips").innerHTML=ch;
   [...$("shP").children].forEach(b=>{const k=b.dataset.p;
-    b.disabled=!(k==="DOH"&&s.doh||k==="DOT"&&s.dot||k==="DNS"&&s.dns&&s.dns.length);
+    b.disabled=!(k==="DOH"&&s.doh||k==="DOT"&&s.dot||k==="DNS"&&s.dns&&s.dns.length||k==="DNSCRYPT"&&s.sdns);
     b.classList.toggle("on",k===p)});
   $("shA").textContent=ao(s,p);
-  $("shB").textContent=s.lat?"میانهٔ "+fa(s.lat)+" ms · موفق ۱۰۰٪":"";
+  $("shCP").style.display=p==="DNSCRYPT"?"none":"";
+  setBkBtn(BK.has(id));
+  if(s.lat)latShow(s.lat);else latIdle();
+  const curS=s.id===ST.srv,u=$("shUse");
+  u.classList.toggle("cur",curS);
+  u.innerHTML=curS?(IC_OK+"این سرور فعال است"):(IC_BOLT+"فعال‌سازی این سرور");
   $("scrim").classList.add("on");$("sheet").classList.add("on");
 }
-function close(){$("scrim").classList.remove("on");$("sheet").classList.remove("on");$("addSheet").classList.remove("on");$("appsSheet").classList.remove("on")}
+/* ---------- کمکی‌های نمایش شیت سرور (v3.6) ---------- */
+const IC_BK='<svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+const IC_BOLT='<svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>';
+const IC_OK='<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+function setBkBtn(on){const b=$("shBk");if(!b)return;
+  b.classList.toggle("on",on);
+  b.innerHTML=IC_BK+(on?"در زنجیرهٔ پشتیبان":"افزودن پشتیبان")}
+function latIdle(){const d=$("shLD");d.className="lat-dot";d.style.background="";
+  const f=$("shLF");f.className="lat-fill";f.style.width="0";f.style.background="";
+  const t=$("shB");t.style.color="";t.textContent="سنجیده نشده"}
+function latLoad(){const d=$("shLD");d.className="lat-dot ld";d.style.background="";
+  const f=$("shLF");f.className="lat-fill ld";f.style.width="";
+  const t=$("shB");t.style.color="";t.textContent="در حال سنجش…"}
+function latSet(ms,tx){const c=ms<120?"#2BB673":ms<260?"#F5A623":"#E5484D";
+  const d=$("shLD");d.className="lat-dot on";d.style.background=c;
+  const f=$("shLF");f.className="lat-fill";f.style.background="linear-gradient(90deg,"+c+"77,"+c+")";
+  f.style.width=Math.max(12,Math.min(100,Math.round((ms-20)/480*100)))+"%";
+  const t=$("shB");t.style.color=c;t.textContent=tx}
+function latShow(ms){latSet(ms,"میانهٔ "+fa(ms)+" ms")}
+function latErr(tx){const d=$("shLD");d.className="lat-dot";d.style.background="#E5484D";
+  const f=$("shLF");f.className="lat-fill";f.style.width="0";f.style.background="";
+  const t=$("shB");t.style.color="";t.textContent=tx}
+function close(){$("scrim").classList.remove("on");$("sheet").classList.remove("on");$("addSheet").classList.remove("on");$("appsSheet").classList.remove("on");$("logSheet").classList.remove("on");$("hlSheet").classList.remove("on");$("batSheet").classList.remove("on");$("rwSheet").classList.remove("on")}
 $("scrim").addEventListener("click",close);
 $("shP").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;
   ST.proto[sid]=b.dataset.p;
   if(AND){try{AND.setProto(sid,b.dataset.p)}catch(e){}}
   open(sid);render();sync();snk("پروتکل: "+b.dataset.p)});
 $("shUse").addEventListener("click",()=>{ST.srv=sid;if(AND)AND.setServer(sid);close();render();sync();snk("سرور فعال: "+so(ST.srv).n)});
-$("shBench").addEventListener("click",()=>{const s=so(sid);$("shB").textContent="در حال سنجش…";
+$("shBk").addEventListener("click",()=>{
+  if(!sid)return;const on=!BK.has(sid);
+  if(on)BK.add(sid);else BK.delete(sid);
+  if(AND){try{AND.setBackup(sid,on)}catch(e){}}
+  setBkBtn(on);render();open(sid);
+  snk(on?("«"+so(sid).n+"» به زنجیرهٔ پشتیبان اضافه شد"+(ST.on?" — در صورت قطعی خودکار جایش می‌ایستد":"")):("«"+so(sid).n+"» از زنجیرهٔ پشتیبان حذف شد"))});
+$("shAC").addEventListener("click",()=>{if(!sid)return;const s=so(sid),p=po(s);
+  const tx=p==="DNSCRYPT"?(s.sdns||""):$("shA").textContent;
+  if(!tx)return;
+  const good=()=>snk("نشانی کپی شد"),bad=()=>snk("کپی نشد");
+  const fb=()=>{try{const t=document.createElement("textarea");t.value=tx;
+    t.style.cssText="position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(t);t.select();
+    const ok=document.execCommand("copy");t.remove();ok?good():bad()}catch(e){bad()}};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(tx).then(good,fb);else fb()}
+  catch(e){fb()}});
+$("shBench").addEventListener("click",()=>{const s=so(sid);latLoad();
   if(AND){try{
     if(AND.bench(sid))return;             // نتیجه از طریق window.__bench می‌رسد
-    $("shB").textContent="سنجش دیگری در جریان است";
-  }catch(e){$("shB").textContent="سنجش شروع نشد";return}
+    latErr("سنجش دیگری در جریان است");
+  }catch(e){latErr("سنجش شروع نشد");return}
   return}
-  setTimeout(()=>{s.lat=18+Math.random()*210|0;$("shB").textContent="میانهٔ "+fa(s.lat)+" ms · موفق ۱۰۰٪";setLat(sid)},1300)});
+  setTimeout(()=>{s.lat=18+Math.random()*210|0;latShow(s.lat);setLat(sid)},1300)});
 function sync(){$("stSrv").textContent=so(ST.srv).n;$("stPr").textContent=po(so(ST.srv))}
 
 /* ---------- سنجش ---------- */
@@ -983,20 +1563,31 @@ function benchAll(){snk("در حال سنجش همهٔ سرورها…");
 $("benchAll").addEventListener("click",benchAll);
 /* ---------- افزودن DNS سفارشی ---------- */
 let cproto="DNS";
-function cph(){const a=$("cIp1"),b2=$("cIp2");
-  if(cproto==="DOH"){a.placeholder="https://dns.example/dns-query";b2.style.display="none"}
-  else if(cproto==="DOT"){a.placeholder="hostname (مثلاً dns.example)";b2.style.display="none"}
-  else{a.placeholder="Primary (مثلاً 8.8.8.8)";b2.style.display=""}}
-function openAdd(){cproto="DNS";$("cName").value="";$("cIp1").value="";$("cIp2").value="";
+function cph(){const a=$("cIp1"),b2=$("cIp2"),d=$("dcAddr");
+  if(cproto==="DNSCRYPT"){a.style.display="none";b2.style.display="none";d.style.display=""}
+  else{a.style.display="";d.style.display="none";
+    if(cproto==="DOH"){a.placeholder="https://dns.example/dns-query";b2.style.display="none"}
+    else if(cproto==="DOT"){a.placeholder="hostname (مثلاً dns.example)";b2.style.display="none"}
+    else{a.placeholder="Primary (مثلاً 8.8.8.8)";b2.style.display=""}}}
+function openAdd(){cproto="DNS";$("cName").value="";$("cIp1").value="";$("cIp2").value="";$("dcAddr").value="";
   [...$("cProto").children].forEach(x=>x.classList.toggle("on",x.dataset.p==="DNS"));cph();
   $("scrim").classList.add("on");$("addSheet").classList.add("on")}
 $("cProto").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   cproto=b.dataset.p;[...$("cProto").children].forEach(x=>x.classList.toggle("on",x===b));cph()});
 $("addRow").addEventListener("click",openAdd);
 $("cSave").addEventListener("click",()=>{
-  const n=$("cName").value.trim(),a1=$("cIp1").value.trim(),a2=$("cIp2").value.trim();
-  if(!n||!a1){snk("نام و نشانی الزامی است");return}
+  const n=$("cName").value.trim();
+  if(!n){snk("نام الزامی است");return}
   const obj={id:"custom"+Date.now(),n:n,g:"CUSTOM",t:"سفارشی"};
+  if(cproto==="DNSCRYPT"){
+    const sd=$("dcAddr").value.trim();
+    if(!sd){snk("نشانی sdns:// الزامی است");return}
+    if(!/^sdns:\/\/AQ/.test(sd)){snk("نشانی باید sdns://AQ… باشد (از dnscrypt.info)");return}
+    obj.sdns=sd;S.push(obj);
+    if(AND)AND.addServer(JSON.stringify({name:n,proto:"DNSCRYPT",sdns:sd,doh:"",dot:"",dns:[]}));
+    close();render();snk("سرور DNSCrypt سفارشی افزوده شد: "+n);return}
+  const a1=$("cIp1").value.trim(),a2=$("cIp2").value.trim();
+  if(!a1){snk("نشانی الزامی است");return}
   if(cproto==="DOH"){if(!/^https:\/\//.test(a1)){snk("آدرس DoH باید با https:// شروع شود");return}obj.doh=a1}
   else if(cproto==="DOT"){obj.dot=a1}
   else{obj.dns=[a1];if(a2)obj.dns.push(a2)}
@@ -1020,14 +1611,26 @@ function splitUI(){const sw=$("splitSw");
 function loadEx(){if(AND){try{EX=new Set(JSON.parse(AND.getTunneled()||"[]"))}catch(e){EX=new Set()}}splitUI()}
 function pkgs(){if(AND){try{return JSON.parse(AND.getPackages()||"[]")}catch(e){return[]}}return DEMO_PKGS}
 function avatarColor(s){const C=["#0077B6","#0096C7","#00B4D8","#48CAE4","#2BB673","#F2A93B","#E5484D","#7E57C2"];let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return C[h%C.length]}
+const iconObs=("IntersectionObserver" in window)?new IntersectionObserver(es=>{
+  for(const en of es){if(!en.isIntersecting)continue;iconObs.unobserve(en.target);
+    const el=en.target,p=el.dataset.p;
+    if(!p||el.dataset.got)return;el.dataset.got="1";
+    if(AND){try{const ic=AND.getAppIcon(p);
+      if(ic){el.style.backgroundImage="url(data:image/webp;base64,"+ic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";el.textContent=""}}catch(e){}}}
+},{root:null,rootMargin:"150px"}):null;
+function watchIcons(){const l=$("appsList");if(!l)return;
+  l.querySelectorAll(".aav:not([data-got])").forEach(el=>{
+    if(iconObs)iconObs.observe(el);
+    else if(AND){try{const ic=AND.getAppIcon(el.dataset.p);
+      if(ic){el.style.backgroundImage="url(data:image/webp;base64,"+ic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";el.textContent=""}}catch(e){}}})}
 function renderApps(q){const list=$("appsList");if(!list)return;q=(q||"").trim().toLowerCase();
   const ps=pkgs().filter(x=>!q||String(x.n).toLowerCase().includes(q)||String(x.p).toLowerCase().includes(q));
   list.innerHTML=ps.length?ps.map(x=>{const on=EX.has(x.p);
     return `<div class="arow ${on?"on":""}" data-p="${x.p}">
-      <span class="aav" style="background:${avatarColor(x.p)}">${String(x.n||"?").trim().charAt(0)}</span>
+      <span class="aav" data-p="${x.p}" style="background:${avatarColor(x.p)}">${String(x.n||"?").trim().charAt(0)}</span>
       <span class="ainfo"><span class="an">${x.n}</span><span class="ap">${x.p}</span></span>
       <span class="cbx"><input type="checkbox" tabindex="-1" ${on?"checked":""}><svg viewBox="0 0 64 64"><path class="path" pathLength="575.0541381835938" d="M 0 16 V 56 A 8 8 90 0 0 8 64 H 56 A 8 8 90 0 0 64 56 V 8 A 8 8 90 0 0 56 0 H 8 A 8 8 90 0 0 0 8 V 16 L 32 48 L 64 16 V 8 A 8 8 90 0 0 56 0 H 8 A 8 8 90 0 0 0 8 V 56 A 8 8 90 0 0 8 64 H 56 A 8 8 90 0 0 64 56 V 16"/></svg></span>
-    </div>`}).join(""):'<div class="logempty" style="padding:22px;text-align:center;line-height:2.2">فهرست برنامه‌ها در دسترس نیست<br><button id="appRetry" style="margin-top:10px;background:var(--pc);color:var(--onpc);border:none;border-radius:10px;padding:8px 18px;font-family:inherit;font-weight:700;cursor:pointer">تلاش دوباره</button></div>'}
+    </div>`}).join(""):'<div class="logempty" style="padding:22px;text-align:center;line-height:2.2">فهرست برنامه‌ها در دسترس نیست<br><button id="appRetry" style="margin-top:10px;background:var(--pc);color:var(--onpc);border:none;border-radius:10px;padding:8px 18px;font-family:inherit;font-weight:700;cursor:pointer">تلاش دوباره</button></div>';watchIcons()}
 function openApps(){if(!AND&&EX.size===0)EX=new Set(["com.tencent.ig"]);
   renderApps("");$("appSearch").value="";
   $("scrim").classList.add("on");$("appsSheet").classList.add("on")}
@@ -1109,12 +1712,14 @@ const ROWS={cPriv:[["block","مسدودسازی تبلیغات","فهرست دا
                    ["ipv6","مسدودسازی IPv6","پایدارتر روی شبکهٔ بدون IPv6"]],
             cConn:[["verify","بررسی گواهی TLS","فقط برای گواهی خودامضا خاموش کنید"],
                    ["fallback","بازگشت به DNS ساده","اگر DoH/DoT پاسخ نداد"],
-                   ["autostart","شروع خودکار","پس از روشن شدن گوشی"]]};
+                   ["autostart","شروع خودکار","پس از روشن شدن گوشی"],
+                   ["sound","اعلان صوتی اتصال","اعلام «DNS Online / Offline» با صدا"],
+                   ["race","حالت مسابقه (Race)","پرس‌وجوی هم‌زمان از سرور و پشتیبان‌ها؛ سریع‌ترین پاسخ برنده"]]};
 function renderSet(){
   for(const k in ROWS)$(k).innerHTML=ROWS[k].map(([id,t,s])=>
     `<div class="rw" data-r="${id}"><div style="flex:1"><div class="t">${t}</div><div class="s">${s}</div></div><span class="switch ${ST[id]?"on":""}"><input class="togglesw" type="checkbox" tabindex="-1" ${ST[id]?"checked":""}><span class="indicator left"></span><span class="indicator right"></span><span class="button"></span></span></div>`).join("");
 }
-$("pg-settings").addEventListener("click",e=>{const r=e.target.closest(".rw");if(!r||r.id==="rowApps"||r.id==="rowSplit")return;
+$("pg-settings").addEventListener("click",e=>{const r=e.target.closest(".rw");if(!r||r.id==="rowApps"||r.id==="rowSplit"||r.id==="rowBat"||r.id==="chatRow")return;
   const id=r.dataset.r;ST[id]=!ST[id];r.querySelector(".togglesw").checked=ST[id];
   const sw=r.querySelector(".switch");if(sw)sw.classList.toggle("on",ST[id]);
   if(AND){try{AND.setSetting(id,ST[id]?"1":"0")}catch(e){}}
@@ -1146,7 +1751,15 @@ function renderFaq(){$("faq").innerHTML=FAQ.map((f,i)=>
 $("faq").addEventListener("click",e=>{const q=e.target.closest(".faq");if(!q)return;
   const open=q.classList.toggle("open");
   const a=q.querySelector(".fa");a.style.maxHeight=open?a.scrollHeight+"px":"0"});
-render();renderSet();renderFaq();renderLogs(null);sync();stats();navInd("home");loadEx();
+function pdnsWarn(){const c=$("cConn");if(!c)return;
+  let w=document.getElementById("pdnsW");
+  if(!PDNS){if(w)w.remove();return}
+  if(!w){w=document.createElement("div");w.id="pdnsW";
+    w.style.cssText="margin:6px -14px -8px;padding:9px 14px;border-top:1px solid rgba(229,72,77,.35);color:#E5484D;font-size:11.5px;line-height:1.9;direction:rtl";
+    w.innerHTML="⚠ «Private DNS» اندروید (حالت سخت‌گیرانه) فعال است: پرس‌وجوهای سیستم از تونل این برنامه عبور نمی‌کنند و این یعنی نشت DNS. برای رفع، به تنظیمات اندروید ← شبکه و اینترنت ← Private DNS بروید و «Off» یا «Auto» را انتخاب کنید.";
+    c.appendChild(w)}}
+render();renderSet();renderFaq();renderLogs(null);sync();stats();navInd("home");loadEx();pdnsWarn();renderCatalog();renderRewrites();refreshStats();
+if(PDNS)setTimeout(()=>snk("هشدار: Private DNS اندروید فعال است — DNS از تونل عبور نمی‌کند"),1200);
 setTimeout(()=>navInd(cur),60);
 
 /* ---------- اسپلش ---------- */
@@ -1157,27 +1770,6 @@ setTimeout(()=>navInd(cur),60);
     document.querySelectorAll('#pg-home .stg').forEach(el=>{el.style.animation='none';void el.offsetWidth;el.style.animation=''});
   },1350);
   setTimeout(()=>sp.remove(),2100);
-})();
-</script>
-</body>
-</html>
-sp.remove(),2100);
-})();
-</script>
-</body>
-</html>
-if(!sp)return;
-  const src=document.querySelector('.brand .mk img');if(src)sp.querySelector('img').src=src.src;
-  setTimeout(()=>{sp.classList.add('off');
-    // بازپخش ورود پلکانی صفحهٔ خانه هم‌زمان با کنار رفتن اسپلش
-    document.querySelectorAll('#pg-home .stg').forEach(el=>{el.style.animation='none';void el.offsetWidth;el.style.animation=''});
-  },1350);
-  setTimeout(()=>sp.remove(),2100);
-})();
-</script>
-</body>
-</html>
-sp.remove(),2100);
 })();
 </script>
 </body>
