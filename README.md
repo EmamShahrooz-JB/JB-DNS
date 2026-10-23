@@ -13,7 +13,7 @@
   <a href="https://github.com/EmamShahrooz-JB/JB-DNS/releases/latest"><img src="https://img.shields.io/github/v/release/EmamShahrooz-JB/JB-DNS?style=for-the-badge&logo=github&label=%D9%86%D8%B3%D8%AE%D9%87" alt="release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/EmamShahrooz-JB/JB-DNS?style=for-the-badge&color=818cf8" alt="license"></a>
   <a href="https://github.com/EmamShahrooz-JB/JB-DNS/releases/latest"><img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="android"></a>
-  <img src="https://img.shields.io/badge/%D8%AA%D8%B3%D8%AA-84%20%E2%9C%93-2BB673?style=for-the-badge" alt="tests">
+  <img src="https://img.shields.io/badge/%D8%AA%D8%B3%D8%AA-97%20%E2%9C%93-2BB673?style=for-the-badge" alt="tests">
 </p>
 
 <p align="center">
@@ -320,6 +320,7 @@ keyPassword=رمز-شما
 ## 🔄 تاریخچهٔ نسخه‌ها
 
 تغییرات کامل در **[CHANGES.md](CHANGES.md)** —
+**v4.3** (Bootstrap ضدسانسور DoH/DoT، کش گواهی و بازگشت TCP در DNSCrypt، مسابقهٔ بلادرنگ، کوچک‌سازی R8 به ۲٫۴ مگابایت، رفع کامل باگ‌های WebView و ۹۷ تست) ·
 **v4.2** (گفتگوی پشتیبانی تلگرام‌مانند + پنل مدیریت نهان‌طرح) ·
 **v4.1** (گزارش مشکل → Worker + D1) ·
 v4.0 (کاتالوگ بلاک‌لیست، نمودار، تست سلامت، مسابقه، بازنویسی، ویزارد باتری، پشتیبان‌گیری، ویجت) ·

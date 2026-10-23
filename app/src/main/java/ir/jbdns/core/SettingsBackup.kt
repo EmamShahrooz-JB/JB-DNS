@@ -30,7 +30,7 @@ object SettingsBackup {
 
     /** کلیدهای مجاز toggle — هر کلید دیگری نادیده گرفته می‌شود. */
     val TOGGLE_KEYS = setOf(
-        "block", "sinkhole", "ipv6", "verify", "fallback", "autostart", "sound"
+        "block", "sinkhole", "ipv6", "verify", "fallback", "autostart", "sound", "log"
     )
 
     fun export(d: BackupData): String = JSONObject().apply {

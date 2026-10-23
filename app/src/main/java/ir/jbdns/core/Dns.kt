@@ -34,7 +34,7 @@ object Dns {
 
     class Question(val name: String, val type: Int, val qclass: Int = 1)
 
-    /** یک رکورد پاسخ. [data] برای A/AAAA آدرس متنی است و برای بقیه‌ها مقدار خام. */
+    /** یک رکورد پاسخ. [pretty] برای A/AAAA آدرس متنی است و برای بقیه‌ها مقدار خوانا. */
     class Answer(
         val name: String,
         val type: Int,
@@ -53,6 +53,8 @@ object Dns {
     ) {
         val rcode: Int get() = flags and 0xF
         val isResponse: Boolean get() = (flags shr 15) and 1 == 1
+        /** بیت TC (پاسخ کوتاه‌شده روی UDP — نیازمند بازپرس‌وجو روی TCP). */
+        val isTruncated: Boolean get() = (flags and 0x0200) != 0
         val addresses: List<String>
             get() = answers.filter { it.type == TYPE_A || it.type == TYPE_AAAA }.map { it.pretty }
     }
@@ -186,6 +188,25 @@ object Dns {
         return o + 1
     }
 
+    /** پاک‌سازی نویسه‌های کنترلی و خطرناک HTML از برچسب‌های خام DNS (دفاع در عمق). */
+    fun sanitizeLabel(raw: String): String {
+        var changed = false
+        for (c in raw) {
+            if (c.code < 0x21 || c.code == 0x7F || c == '<' || c == '>' || c == '"' || c == '\'' || c == '`') {
+                changed = true
+                break
+            }
+        }
+        if (!changed) return raw
+        val sb = StringBuilder(raw.length)
+        for (c in raw) {
+            if (c.code >= 0x21 && c.code != 0x7F && c != '<' && c != '>' && c != '"' && c != '\'' && c != '`') {
+                sb.append(c)
+            }
+        }
+        return sb.toString()
+    }
+
     /** خواندن نام با پشتیبانی از فشرده‌سازی اشاره‌گر (0xC0). */
     fun readName(buf: ByteArray, startOff: Int, len: Int): Pair<String, Int> {
         val sb = StringBuilder()
@@ -210,8 +231,11 @@ object Dns {
                 continue
             }
             if (off + 1 + b > len) break
-            if (sb.isNotEmpty()) sb.append('.')
-            sb.append(String(buf, off + 1, b, Charsets.UTF_8))
+            val label = sanitizeLabel(String(buf, off + 1, b, Charsets.UTF_8))
+            if (label.isNotEmpty()) {
+                if (sb.isNotEmpty()) sb.append('.')
+                sb.append(label)
+            }
             off += b + 1
         }
         return sb.toString() to (if (resume > 0) resume else off)
@@ -233,7 +257,7 @@ object Dns {
                 while (i < rdata.size) {
                     val n = rdata[i].toInt() and 0xFF
                     if (i + 1 + n > rdata.size) break
-                    parts.add(String(rdata, i + 1, n, Charsets.UTF_8))
+                    parts.add(sanitizeLabel(String(rdata, i + 1, n, Charsets.UTF_8)))
                     i += n + 1
                 }
                 parts.joinToString(" ")
@@ -241,9 +265,10 @@ object Dns {
             else -> rdata.joinToString("") { "%02x".format(it) }
         }
 
-    /** آدرس متنی → بایت (برای ساخت پاسخ مصنوعی). بدون جست‌وجوی شبکه برای IPv4. */
+    /** آدرس متنی → بایت (برای ساخت پاسخ مصنوعی). بدون جست‌وجوی شبکه برای IPv4/IPv6. */
     fun addressToBytes(address: String): ByteArray {
-        val parts = address.split('.')
+        val clean = address.trim().removePrefix("[").removeSuffix("]")
+        val parts = clean.split('.')
         if (parts.size == 4) {
             val out = ByteArray(4)
             var ok = true
@@ -254,18 +279,25 @@ object Dns {
             }
             if (ok) return out
         }
-        return try {
-            InetAddress.getByName(address).address
-        } catch (_: UnknownHostException) {
-            byteArrayOf(0, 0, 0, 0)
+        if (clean.contains(':')) {
+            return try {
+                InetAddress.getByName(clean).address
+            } catch (_: UnknownHostException) {
+                ByteArray(16)
+            }
         }
+        return byteArrayOf(0, 0, 0, 0)
     }
 
     /** ساخت پاسخ A مصنوعی (برای مسدودسازی با sinkhole). */
     fun buildSyntheticA(request: ByteArray, len: Int, sinkholeIp: String): ByteArray =
         buildResponseWithA(request, len, listOf(sinkholeIp), ttl = 30)
 
-    /** ساخت پاسخ A واقعی از روی یک پرس‌وجو (برای تست و پاسخ‌های مصنوعی). */
+    /** ساخت پاسخ AAAA مصنوعی (برای مسدودسازی یا بازنویسی IPv6). */
+    fun buildSyntheticAAAA(request: ByteArray, len: Int, ipv6: String = "::"): ByteArray =
+        buildResponseWithA(request, len, listOf(ipv6), ttl = 30)
+
+    /** ساخت پاسخ A/AAAA واقعی از روی یک پرس‌وجو (برای تست و پاسخ‌های مصنوعی). */
     fun buildResponseWithA(request: ByteArray, len: Int, addresses: List<String>, ttl: Int = 60): ByteArray {
         val msg = parse(request, len)
         val q = msg.question ?: return buildError(request, len, RCODE_FORMERR)

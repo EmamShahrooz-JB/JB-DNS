@@ -22,7 +22,7 @@ class TunnelWidget : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent?.action == ACTION_TOGGLE) {
+        if (intent.action == ACTION_TOGGLE) {
             toggle(context)
         } else {
             super.onReceive(context, intent)

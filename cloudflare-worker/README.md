@@ -57,7 +57,7 @@ wrangler login
 cd cloudflare-worker
 
 wrangler d1 create jbdns-feedback          # شناسه را در wrangler.toml بگذارید
-wrangler d1 execute jbdns-feedback --remote --command "CREATE TABLE reports (id TEXT PRIMARY KEY, time TEXT NOT NULL, app TEXT, text TEXT NOT NULL, contact TEXT, diagnostics TEXT, logs TEXT, ua TEXT); CREATE INDEX idx_reports_time ON reports(time); CREATE TABLE rate_limit (key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0); CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT);"
+wrangler d1 execute jbdns-feedback --remote --command "CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY, time TEXT NOT NULL, app TEXT, text TEXT NOT NULL, contact TEXT, diagnostics TEXT, logs TEXT, ua TEXT); CREATE INDEX IF NOT EXISTS idx_reports_time ON reports(time); CREATE TABLE IF NOT EXISTS rate_limit (key TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, created TEXT NOT NULL, last_activity TEXT NOT NULL, last_user TEXT, last_admin_view TEXT, contact TEXT, ua TEXT, unread INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, time TEXT NOT NULL, sender TEXT NOT NULL, text TEXT NOT NULL, meta TEXT); CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id, time); CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);"
 
 wrangler secret put ADMIN_TOKEN            # رمز پنل مدیریت
 wrangler deploy

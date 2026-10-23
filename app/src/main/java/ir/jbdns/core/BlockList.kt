@@ -28,19 +28,26 @@ class BlockList(rules: Collection<String>) {
         val d = domain.trim().lowercase().removeSuffix(".")
         if (d.isEmpty()) return false
         if (exact.contains(d)) return true
-        if (suffix.contains(d)) return true
-        var idx = d.indexOf('.')
-        while (idx >= 0 && idx < d.length - 1) {
-            if (suffix.contains(d.substring(idx + 1))) return true
-            idx = d.indexOf('.', idx + 1)
-        }
-        return false
+        return matchesDomainOrParent(d, suffix)
     }
 
     companion object {
-        /** دامنه‌های تبلیغاتی و ردیاب پرکاربرد — فهرست داخلی و سبک. */
+        /** بررسی تطبیق دقیق دامنه یا هر یک از دامنه‌های والد آن در مجموعهٔ داده‌شده. */
+        fun matchesDomainOrParent(domain: String, set: Set<String>?): Boolean {
+            if (set.isNullOrEmpty()) return false
+            val d = domain.trim().lowercase().removeSuffix(".")
+            if (d.isEmpty()) return false
+            if (set.contains(d)) return true
+            var idx = d.indexOf('.')
+            while (idx >= 0 && idx < d.length - 1) {
+                if (set.contains(d.substring(idx + 1))) return true
+                idx = d.indexOf('.', idx + 1)
+            }
+            return false
+        }
+
+        /** دامنه‌های تبلیغاتی و ردیاب پرکاربرد — فهرست داخلی و سبک (بدون مثبت کاذب روی لینک‌های عمیق). */
         val DEFAULT_RULES: List<String> = listOf(
-            // تبلیغات موبایل و وب
             "doubleclick.net",
             "googlesyndication.com",
             "googleadservices.com",
@@ -61,14 +68,12 @@ class BlockList(rules: Collection<String>) {
             "ironsrc.com",
             "appsflyer.com",
             "adjust.com",
-            "branch.io",
             "crashlytics.com",
             "moatads.com",
             "taboola.com",
             "outbrain.com",
             "criteo.com",
             "criteo.net",
-            "taboola.com",
             "smartadserver.com",
             "pubmatic.com",
             "rubiconproject.com",
@@ -97,7 +102,7 @@ class BlockList(rules: Collection<String>) {
             "inner-active.mobi",
             "yandexadexchange.net",
             "yadro.ru",
-            "mail.ru.ads",
+            "ads.mail.ru",
             "popads.net",
             "popcash.net",
             "propellerads.com",

@@ -1,0 +1,143 @@
+name: Android CI & Emulator Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build APKs & Run 97 Tests (JUnit + Robolectric SDK 34)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Configure Android SDK 34
+        run: |
+          SDK_MGR=$(find "$ANDROID_HOME" -name sdkmanager | head -n1)
+          yes | "$SDK_MGR" --licenses >/dev/null || true
+          yes | "$SDK_MGR" "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+
+      - name: Validate WebView JS & Cloudflare Worker ESM syntax
+        run: |
+          python3 -c '
+          import re, subprocess
+          html = open("app/src/main/assets/index.html", encoding="utf-8").read()
+          js = re.search(r"<script>(.*)</script>", html, re.S).group(1)
+          assert subprocess.run(["node", "--check"], input=js.encode()).returncode == 0
+          assert subprocess.run(["node", "--input-type=module", "--check"], stdin=open("cloudflare-worker/worker.js", "rb")).returncode == 0
+          print("JS & Worker syntax checks passed!")
+          '
+
+      - name: Run 97 Unit + Live Network + Robolectric Android 14 Tests
+        run: gradle :app:testDebugUnitTest --warning-mode summary
+
+      - name: Assemble Debug & R8-Minified Release APKs
+        run: gradle :app:assembleDebug :app:assembleRelease --warning-mode summary
+
+      - name: Upload Built APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: jb-dns-apks
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/*.apk
+
+  emulator-e2e:
+    name: Real KVM Android 14 Emulator E2E Boot & Smoke Test
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download Built APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: jb-dns-apks
+          path: apks
+
+      - name: Boot Real Android 14 (API 34) Pixel 6 KVM Emulator & Verify JB-DNS
+        run: |
+          set -e
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          sudo chmod 666 /dev/kvm
+          SDK_MGR=$(find "$ANDROID_HOME" -name sdkmanager | head -n1)
+          AVD_MGR=$(find "$ANDROID_HOME" -name avdmanager | head -n1)
+          yes | "$SDK_MGR" --licenses >/dev/null || true
+          yes | "$SDK_MGR" "platform-tools" "emulator" "system-images;android-34;google_apis;x86_64" >/dev/null
+          echo "no" | "$AVD_MGR" create avd --force --name pixel6 --package "system-images;android-34;google_apis;x86_64" --device "pixel_6" --path "$ANDROID_AVD_HOME/pixel6.avd"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+
+          nohup "$ANDROID_HOME/emulator/emulator" -avd pixel6 \
+            -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot \
+            </dev/null >/tmp/emulator.log 2>&1 &
+          EMU_PID=$!
+
+          if ! timeout 90 "$ANDROID_HOME/platform-tools/adb" wait-for-device; then
+            cat /tmp/emulator.log || true
+            exit 1
+          fi
+          for i in $(seq 1 90); do
+            BOOT=$("$ANDROID_HOME/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+            if [ "$BOOT" = "1" ]; then
+              echo "Android 14 KVM Emulator booted in $((i*2))s!"
+              break
+            fi
+            sleep 2
+          done
+
+          "$ANDROID_HOME/platform-tools/adb" shell input keyevent 82 || true
+          APK_FILE=$(find apks -name "app-debug.apk" | head -n1)
+          echo "Installing APK with runtime permissions granted onto real Pixel 6 Android 14 KVM Emulator: $APK_FILE"
+          "$ANDROID_HOME/platform-tools/adb" install -r -g "$APK_FILE"
+          "$ANDROID_HOME/platform-tools/adb" logcat -c
+          "$ANDROID_HOME/platform-tools/adb" shell am start -W -n ir.jbdns.debug/ir.jbdns.MainActivity
+          sleep 8
+          "$ANDROID_HOME/platform-tools/adb" exec-out screencap -p > emulator-home.png
+
+          echo "=== Focused Window on Real Android 14 Emulator ==="
+          "$ANDROID_HOME/platform-tools/adb" shell dumpsys window | grep -E "mCurrentFocus|mFocusedApp" || true
+
+          echo "=== Verifying Zero Crashes in logcat ==="
+          if "$ANDROID_HOME/platform-tools/adb" logcat -d *:E | grep -F "FATAL EXCEPTION"; then
+            kill -9 "$EMU_PID" 2>/dev/null || true
+            exit 1
+          fi
+
+          PID=$("$ANDROID_HOME/platform-tools/adb" shell pidof ir.jbdns.debug | tr -d '\r')
+          echo "Running Process PID: $PID"
+          [ -n "$PID" ]
+
+          "$ANDROID_HOME/platform-tools/adb" emu kill || true
+          kill -9 "$EMU_PID" 2>/dev/null || true
+          pkill -9 -f qemu-system 2>/dev/null || true
+          "$ANDROID_HOME/platform-tools/adb" kill-server || true
+          echo "REAL GOOGLE KVM ANDROID 14 EMULATOR E2E PASSED 100%!"
+
+      - name: Upload Real Android 14 Emulator Screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-14-emulator-screenshot
+          path: emulator-home.png

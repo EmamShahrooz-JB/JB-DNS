@@ -72,6 +72,9 @@ class DnsVpnService : VpnService() {
     /** زمان آخرین ری‌استارت اجباری (برای جلوگیری از حلقهٔ ری‌استارت). */
     @Volatile private var lastForcedRestartElapsed = 0L
 
+    /** آخرین شبکهٔ فعال برای تشخیص جابه‌جایی واقعی Wi-Fi ↔ دادهٔ همراه. */
+    @Volatile private var activeNet: Network? = null
+
     /** آخرین آماری که روی اعلان نوشته شده‌ایم. */
     private var lastNotifQ = -1L
     private var lastNotifB = -1L
@@ -89,23 +92,31 @@ class DnsVpnService : VpnService() {
 
     /**
      * گوش دادن به تغییر شبکهٔ پیش‌فرض — الگوی NetworkManager در Intra:
-     * با هر شبکهٔ جدید، سوکت‌های بالادست به شبکهٔ فعال گره می‌خورند
-     * (setUnderlyingNetworks) و حافظهٔ نهان DNS خالی می‌شود؛ در غیر این صورت
-     * پس از تعویض WiFi↔دادهٔ همراه، پرس‌وجوها مدت‌ها به شبکهٔ مرده می‌رفتند.
+     * با هر شبکهٔ جدید، سوکت‌های کهنهٔ HTTP/2 و DoT تخلیه می‌شوند، کش Bootstrap و
+     * پاسخ‌های DNS پاک می‌شود و ریزالور روی شبکهٔ جدید تازه می‌گردد تا تعویض
+     * Wi-Fi ↔ دادهٔ همراه بدون ۵ ثانیه مکث انجام شود.
      */
     private fun registerNetworkCallback() {
         runCatching {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val cb = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
+                    val switched = activeNet != null && activeNet != network
+                    activeNet = network
                     runCatching { setUnderlyingNetworks(arrayOf(network)) }
-                    // پاسخ‌های کش‌شدهٔ شبکهٔ قبلی دیگر معتبر نیستند
                     runCatching { stub?.clearCache() }
+                    BootstrapDns.clearCache()
+                    DohResolver.evictAll()
+                    if (switched && running) {
+                        Thread({ runCatching { applySettings() } }, "jb-net-switch").start()
+                    }
                     VpnStats.notifyStateChanged()
                 }
 
                 override fun onLost(network: Network) {
+                    if (activeNet == network) activeNet = null
                     runCatching { setUnderlyingNetworks(null) }
+                    DohResolver.evictAll()
                 }
             }
             cm.registerDefaultNetworkCallback(cb)

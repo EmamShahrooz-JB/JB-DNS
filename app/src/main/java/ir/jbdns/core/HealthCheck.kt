@@ -10,8 +10,20 @@ object HealthCheck {
 
     class Check(val id: String, val title: String, val ok: Boolean, val detail: String)
 
-    /** بازهٔ IPهای «صفحهٔ فیلترینگ» که ISPهای ایرانی به‌جای پاسخ واقعی برمی‌گردانند. */
-    fun isCensorshipIp(ip: String): Boolean = ip.startsWith("10.10.34.")
+    /**
+     * بازهٔ IPهای «صفحهٔ فیلترینگ / مسموم‌سازی DNS» که ISPها به‌جای پاسخ واقعی
+     * برمی‌گردانند (۱۰.۱۰.۳۴.*، لوپ‌بک ۱۲۷.* و آدرس‌های تهی ۰.۰.۰.۰ / ::).
+     */
+    fun isCensorshipIp(ip: String): Boolean {
+        val clean = ip.trim().lowercase()
+        return clean.startsWith("10.10.34.") ||
+            clean == "0.0.0.0" ||
+            clean.startsWith("127.") ||
+            clean == "::" ||
+            clean == "::1" ||
+            clean == "0:0:0:0:0:0:0:0" ||
+            clean == "0:0:0:0:0:0:0:1"
+    }
 
     /**
      * @param resolve نام دامنه را از سرور فعال می‌پرسد؛ خروجی: (آدرس‌ها، میلی‌ثانیه).

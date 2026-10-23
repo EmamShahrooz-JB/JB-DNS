@@ -116,9 +116,9 @@ object BatteryWizard {
      */
     fun open(context: Context, index: Int): String {
         val step = steps().getOrNull(index) ?: return "none"
-        // صفحهٔ خاص سازنده
+        // صفحهٔ خاص سازنده (فرمت pkg/cls)
         if (step.kind != Step.INFO) {
-            if (step.kind == Step.COMPONENT) {
+            if (step.kind.contains('/')) {
                 val parts = step.kind.split('/')
                 if (parts.size == 2) {
                     val intent = Intent().setComponent(ComponentName(parts[0], parts[1]))

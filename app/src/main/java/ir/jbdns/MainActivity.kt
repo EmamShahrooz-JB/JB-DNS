@@ -10,37 +10,39 @@ import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import ir.jbdns.core.BackupData
 import ir.jbdns.core.BatteryWizard
-import ir.jbdns.core.Benchmark
 import ir.jbdns.core.BenchResult
+import ir.jbdns.core.Benchmark
 import ir.jbdns.core.BlockList
 import ir.jbdns.core.BlocklistCatalog
-import ir.jbdns.core.BackupData
 import ir.jbdns.core.Dns
 import ir.jbdns.core.Feedback
 import ir.jbdns.core.HealthCheck
 import ir.jbdns.core.RemoteBlocklist
 import ir.jbdns.core.SettingsBackup
 import ir.jbdns.core.VpnStats
-import ir.jbdns.net.UpstreamFactory
 import ir.jbdns.data.BuiltInServers
 import ir.jbdns.data.Prefs
 import ir.jbdns.data.Proto
 import ir.jbdns.data.Server
 import ir.jbdns.data.ServerGroup
 import ir.jbdns.net.DnsVpnService
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
-import java.io.IOException
+import ir.jbdns.net.ProtectedSocketFactory
+import ir.jbdns.net.UpstreamFactory
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -64,11 +66,20 @@ class MainActivity : AppCompatActivity() {
         Thread(r, "jb-dns-bench").apply { isDaemon = true }
     }
 
+    private val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .socketFactory(ProtectedSocketFactory { sock ->
+                runCatching { DnsVpnService.instance?.protect(sock) }
+            })
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
+
     private val vpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) startVpn() else pushState()
     }
 
-    // اندروید ۱۳+: بدون این مجوز، اعلان پایدارِ تونل (و دکمهٔ قطع روی آن) دیده نمی‌شود
     private val notifPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     /** انتخاب فایل پشتیبان تنظیمات برای بازیابی. */
@@ -83,10 +94,16 @@ class MainActivity : AppCompatActivity() {
             pushState()
             wv.postDelayed({
                 runCatching { wv.reload() }
-                wv.postDelayed({ pushToJs("__imported", "\"$applied\"") }, 800)
+                wv.postDelayed({ pushToJs("__imported", "$applied") }, 800)
             }, 100)
         }.onFailure {
-            runOnUiThread { android.widget.Toast.makeText(this, "بازیابی ناموفق: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
+            runOnUiThread {
+                android.widget.Toast.makeText(
+                    this,
+                    "بازیابی ناموفق: ${it.message}",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
@@ -97,7 +114,6 @@ class MainActivity : AppCompatActivity() {
         wv = WebView(this)
         wv.settings.javaScriptEnabled = true
         wv.settings.domStorageEnabled = true
-        // دسترسی به file:// لازم نیست؛ asset و resource همیشه در دسترس‌اند
         wv.settings.allowFileAccess = false
         wv.webViewClient = WebViewClient()
         wv.setBackgroundColor(0xFF02040C.toInt())
@@ -105,14 +121,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(wv)
         wv.loadUrl("file:///android_asset/index.html")
 
-        // همگام‌سازی فوری وضعیت پس از بارگذاری UI — برای وقتی برنامه با
-        // تونلِ روشن دوباره باز می‌شود تا دکمه بلافاصله حالت «متصل» را نشان دهد
-        wv.postDelayed({ pushState() }, 900)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (destroyed) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    return
+                }
+                wv.evaluateJavascript("(function(){return window.__handleBack?!!window.__handleBack():false})()") { res ->
+                    if (res == "true") return@evaluateJavascript
+                    if (wv.canGoBack()) {
+                        wv.goBack()
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
+            }
+        })
 
-        // انتخاب سرور پیش‌فرض بر اساس موقعیت واقعی شبکه:
-        // اگر Shecan (پیش‌فرض ایران) پاسخ نداد ولی Cloudflare پاسخ داد،
-        // پیش‌فرض به Cloudflare تغییر می‌کند — بیرون از ایران سرورهای ایرانی
-        // هیچ‌وقت جواب نمی‌دهند و کاربر فکر می‌کرد «DNS کار نمی‌کند».
+        wv.postDelayed({ pushState() }, 900)
         maybePickDefaultServer()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -121,36 +150,36 @@ class MainActivity : AppCompatActivity() {
             notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        // آمدن از کاشی تنظیمات سریع با قصد «اتصال»
         if (intent?.getBooleanExtra(EXTRA_CONNECT, false) == true) {
             wv.postDelayed({ maybeConnectFromTile() }, 500)
         }
     }
 
     private fun maybePickDefaultServer() {
-        if (prefs.serverId != BuiltInServers.DEFAULT_ID) return  // کاربر خودش انتخاب کرده
+        if (prefs.initialProbed) return
+        prefs.initialProbed = true
+        if (prefs.serverId != BuiltInServers.DEFAULT_ID) return
         if (DnsVpnService.isTunnelRunning) return
         Thread({
             val shecanAlive = probeUdp("178.22.122.100")
-            if (shecanAlive) return@Thread                     // داخل ایران؛ همان Shecan
+            if (shecanAlive || destroyed) return@Thread
             val cloudflareAlive = probeUdp("1.1.1.1")
-            if (cloudflareAlive) {
+            if (cloudflareAlive && !destroyed && prefs.serverId == BuiltInServers.DEFAULT_ID) {
                 prefs.serverId = "cloudflare"
-                pushState()   // شامل sid است؛ UI خودش همگام می‌شود
+                pushState()
             }
-            // اگر هیچ‌کدام پاسخ ندادند، شبکه قطع است؛ پیش‌فرض دست‌نخورده می‌ماند
-        }, "jb-default-probe").start()
+        }, "jb-default-probe").apply { isDaemon = true; start() }
     }
 
     private fun probeUdp(ip: String): Boolean = runCatching {
         java.net.DatagramSocket().use { s ->
             s.soTimeout = 1500
-            val q = ir.jbdns.core.Dns.buildQuery(0x4A4A, "www.google.com", ir.jbdns.core.Dns.TYPE_A)
+            val q = Dns.buildQuery(0x4A4A, "www.google.com", Dns.TYPE_A)
             s.send(java.net.DatagramPacket(q, q.size, java.net.InetSocketAddress(ip, 53)))
             val buf = ByteArray(512)
             s.receive(java.net.DatagramPacket(buf, buf.size))
+            buf.size >= Dns.HEADER_SIZE
         }
-        true
     }.getOrDefault(false)
 
     override fun onNewIntent(intent: Intent) {
@@ -173,9 +202,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopVpn() {
-        // قطع مستقیم و قطعی: اول خودِ سرویس (بستن fd تونل و توقف نخ‌ها)،
-        // سپس stopService به‌عنوان پشتیبان. با این ترتیب حتی اگر یکی از
-        // مسیرها کند باشد، تونل بلافاصله پایین می‌آید.
         DnsVpnService.instance?.stopVpn()
         runCatching { stopService(Intent(this, DnsVpnService::class.java)) }
         VpnStats.active = false
@@ -198,7 +224,6 @@ class MainActivity : AppCompatActivity() {
         if (!destroyed) wv.evaluateJavascript("window.__vpn && window.__vpn(${stateJson()})", null)
     }
 
-    /** فراخوانی یک تابع JS از سمت کاتلین (برای نتیجهٔ نامتقارن مثل سنجش سرعت). */
     private fun pushToJs(fn: String, jsonArg: String) {
         if (destroyed) return
         runOnUiThread {
@@ -220,13 +245,15 @@ class MainActivity : AppCompatActivity() {
     private fun serverJson(s: Server): JSONObject = JSONObject().apply {
         put("id", s.id)
         put("n", s.name)
-        put("g", "CUSTOM")
+        put("g", s.group.name)
+        if (s.iranOnly) put("ir", 1)
+        if (s.custom) put("c", 1)
         s.doh?.let { put("doh", it) }
         s.dot?.let { put("dot", it) }
         s.sdns?.let { put("sdns", it) }
         put("sup", JSONArray().apply { s.supports.forEach { put(it.name) } })
         put("dns", JSONArray(s.dns))
-        put("t", s.note.ifBlank { "سفارشی" })
+        put("t", s.note.ifBlank { if (s.custom) "سفارشی" else "" })
         put("proto", s.proto.name)
     }
 
@@ -234,9 +261,6 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun connect(serverId: String) {
             prefs.serverId = serverId
-            // گفت‌وگوی مجوز VPN باید از نخ اصلی اجرا شود؛ متدهای پل روی
-            // نخ JavaBridgeِ وب‌ویو صدا زده می‌شوند و launch از نخ غیراصلی
-            // می‌تواند گفت‌وگو را خراب یا استثنا بیندازد.
             runOnUiThread {
                 if (destroyed) return@runOnUiThread
                 val prepare = VpnService.prepare(this@MainActivity)
@@ -245,7 +269,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
-        fun disconnect() { stopVpn() }
+        fun disconnect() {
+            stopVpn()
+        }
 
         @JavascriptInterface
         fun state(): String = stateJson()
@@ -259,46 +285,67 @@ class MainActivity : AppCompatActivity() {
         }.toString()
 
         @JavascriptInterface
+        fun clearLogs() {
+            VpnStats.clearLog()
+        }
+
+        @JavascriptInterface
         fun setServer(id: String) {
             prefs.serverId = id
-            // اگر تونل روشن است، ریزالور بالادست بی‌درنگ عوض شود (باگ: قبلاً تا
-            // بستن و باز کردن برنامه سرور قبلی می‌ماند)
             DnsVpnService.instance?.applySettings()
         }
 
-        /** افزودن سرور سفارشی؛ شناسهٔ رکورد ذخیره‌شده برگردانده می‌شود تا UI همان را نگه دارد. */
+        @JavascriptInterface
+        fun builtInServers(): String = JSONArray().apply {
+            for (s in BuiltInServers.ALL) put(serverJson(s))
+        }.toString()
+
         @JavascriptInterface
         fun addServer(json: String): String {
             val id = "c" + System.currentTimeMillis()
             runCatching {
                 val o = JSONObject(json)
                 val dnsArr = o.optJSONArray("dns")
-                prefs.saveCustomServer(Server(
+                val proto = Proto.fromId(o.optString("proto"))
+                val server = Server(
                     id = id,
-                    name = o.optString("name"),
+                    name = o.optString("name").trim().take(80),
                     group = ServerGroup.CUSTOM,
-                    doh = o.optString("doh").ifBlank { null },
-                    dot = o.optString("dot").ifBlank { null },
-                    sdns = o.optString("sdns").ifBlank { null },
-                    dns = (0 until (dnsArr?.length() ?: 0)).map { dnsArr!!.getString(it) },
+                    doh = o.optString("doh").trim().ifBlank { null },
+                    dot = o.optString("dot").trim().ifBlank { null },
+                    sdns = o.optString("sdns").trim().ifBlank { null },
+                    dns = (0 until (dnsArr?.length() ?: 0))
+                        .map { dnsArr!!.getString(it).trim() }
+                        .filter { it.isNotBlank() },
                     note = "سفارشی",
                     custom = true,
-                    proto = Proto.fromId(o.optString("proto"))
-                ))
+                    proto = proto
+                )
+                prefs.saveCustomServer(server)
+                prefs.setProtoFor(id, proto)
             }
             return id
         }
 
-        /** سرورهای سفارشی ذخیره‌شده (برای بازیابی پس از باز شدن دوبارهٔ برنامه). */
+        @JavascriptInterface
+        fun deleteServer(id: String): Boolean {
+            val existing = prefs.findServer(id) ?: return false
+            if (!existing.custom && existing.group != ServerGroup.CUSTOM) return false
+            prefs.deleteCustomServer(id)
+            prefs.toggleBackup(id, false)
+            if (prefs.serverId == id) {
+                prefs.serverId = BuiltInServers.DEFAULT_ID
+            }
+            DnsVpnService.instance?.applySettings()
+            pushState()
+            return true
+        }
+
         @JavascriptInterface
         fun customServers(): String = JSONArray().apply {
             for (s in prefs.customServers()) put(serverJson(s))
         }.toString()
 
-        /**
-         * فهرست برنامه‌های قابل اجرای نصب‌شده برای تونل افتراقی (Split Tunneling).
-         * برچسب هر برنامه + شناسهٔ بسته. پس از اولین فراخوانی ذخیره می‌شود.
-         */
         @JavascriptInterface
         fun getPackages(): String {
             packageCache?.let { return it.toString() }
@@ -306,7 +353,6 @@ class MainActivity : AppCompatActivity() {
             val arr = JSONArray()
             val seen = HashSet<String>()
 
-            // مسیر اصلی: فعالیت‌های لانچر (با <queries> مانیفست در اندروید ۱۱+ هم کار می‌کند)
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
             val apps = runCatching { pm.queryIntentActivities(launcherIntent, 0) }.getOrDefault(emptyList())
             for (info in apps.sortedBy { it.loadLabel(pm).toString() }) {
@@ -318,7 +364,6 @@ class MainActivity : AppCompatActivity() {
                 })
             }
 
-            // مسیر جایگزین: برخی رام‌ها فهرست بالا را خالی برمی‌گردانند
             if (arr.length() == 0) {
                 val pkgs = runCatching { pm.getInstalledPackages(0) }.getOrDefault(emptyList())
                 for (pi in pkgs) {
@@ -339,49 +384,60 @@ class MainActivity : AppCompatActivity() {
             return arr.toString()
         }
 
-        /** بسته‌های عبوری از تونل (Split Tunneling). */
         @JavascriptInterface
         fun getTunneled(): String = JSONArray(prefs.tunneledPackages()).toString()
 
-        /** شناسهٔ سرورهای پشتیبان (زنجیرهٔ failover). */
         @JavascriptInterface
         fun getBackups(): String = JSONArray(prefs.backupIds()).toString()
 
-        /** افزودن/حذف سرور به/از زنجیرهٔ پشتیبان؛ اگر تونل روشن است بی‌درنگ اعمال می‌شود. */
         @JavascriptInterface
         fun setBackup(id: String, on: Boolean) {
             prefs.toggleBackup(id, on)
             DnsVpnService.instance?.applySettings()
         }
 
-        /** مسدود کردن یک دامنه (از صفحهٔ لاگ)؛ تعداد کل دامنه‌های دلخواه برمی‌گردد. */
+        @JavascriptInterface
+        fun getCustomRules(): String = JSONObject().apply {
+            put("blocked", JSONArray(prefs.extraBlockedDomains()))
+            put("allowed", JSONArray(prefs.allowedDomains().sorted()))
+        }.toString()
+
         @JavascriptInterface
         fun addBlockedDomain(domain: String): Int {
-            val d = domain.trim().lowercase()
+            val d = Dns.sanitizeLabel(domain.trim().lowercase().removeSuffix("."))
             if (d.isNotEmpty() && prefs.extraBlockedDomains().none { it == d }) {
                 prefs.setExtraBlockedDomains(prefs.extraBlockedDomains() + d)
+                prefs.setAllowed(d, false)
                 DnsVpnService.instance?.applySettings()
             }
             return prefs.extraBlockedDomains().size
         }
 
-        /** استثنا کردن (هرگز مسدود نشود) یا لغو استثنای یک دامنه. */
+        @JavascriptInterface
+        fun removeBlockedDomain(domain: String): Int {
+            val d = domain.trim().lowercase().removeSuffix(".")
+            prefs.setExtraBlockedDomains(prefs.extraBlockedDomains().filterNot { it == d })
+            DnsVpnService.instance?.applySettings()
+            return prefs.extraBlockedDomains().size
+        }
+
         @JavascriptInterface
         fun addAllowDomain(domain: String, allow: Boolean) {
-            prefs.setAllowed(domain, allow)
+            val d = Dns.sanitizeLabel(domain.trim().lowercase().removeSuffix("."))
+            if (d.isEmpty()) return
+            prefs.setAllowed(d, allow)
+            if (allow) {
+                prefs.setExtraBlockedDomains(prefs.extraBlockedDomains().filterNot { it == d })
+            }
             DnsVpnService.instance?.applySettings()
         }
 
-        /**
-         * آیکون برنامه به صورت WebP-base64 (۹۶px) برای فهرست تونل افتراقی.
-         * تهی یعنی آیکون در دسترس نیست (UI به آواتار حرف‌رنگی برمی‌گردد).
-         */
         @JavascriptInterface
         fun getAppIcon(pkg: String): String {
             if (pkg.isBlank()) return ""
             iconCache[pkg]?.let { return it }
             val b64 = runCatching {
-                val dr = packageManager.getApplicationIcon(pkg) ?: return@runCatching ""
+                val dr = packageManager.getApplicationIcon(pkg)
                 val size = 96
                 val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
                 val canvas = android.graphics.Canvas(bmp)
@@ -396,7 +452,6 @@ class MainActivity : AppCompatActivity() {
             return b64
         }
 
-        /** وضعیت فهرست مسدودسازی راه دور. */
         @JavascriptInterface
         fun getBlocklist(): String = JSONObject().apply {
             put("url", prefs.blocklistUrl)
@@ -404,39 +459,33 @@ class MainActivity : AppCompatActivity() {
             put("updated", prefs.blocklistUpdatedMs)
         }.toString()
 
-        /**
-         * ثبت آدرس فهرست مسدودسازی راه دور و دانلود آن در پس‌زمینه.
-         * نتیجه (موفقیت/تعداد دامنه) با window.__blocklist به UI هل داده می‌شود؛
-         * اگر تونل روشن باشد فهرست بی‌درنگ اعمال می‌شود.
-         */
         @JavascriptInterface
         fun setBlocklistUrl(url: String): Boolean {
-            prefs.blocklistUrl = url.trim()
+            val clean = url.trim()
+            prefs.blocklistUrl = clean
             Thread({
-                val r = ir.jbdns.core.RemoteBlocklist.download(applicationContext, url)
+                val r = RemoteBlocklist.download(applicationContext, clean)
                 if (r.ok) {
                     prefs.blocklistCount = r.count
-                    prefs.blocklistUpdatedMs = System.currentTimeMillis()
+                    prefs.blocklistUpdatedMs = if (clean.isEmpty()) 0L else System.currentTimeMillis()
                     DnsVpnService.instance?.applySettings()
                 }
                 pushToJs("__blocklist", JSONObject().apply {
                     put("ok", r.ok)
                     put("count", r.count)
                     put("error", r.error ?: "")
-                    put("url", url)
+                    put("url", clean)
                 }.toString())
             }, "jb-blocklist-dl").start()
             return true
         }
 
-        /** افزودن/حذف یک برنامه از فهرست عبور از تونل؛ اگر تونل روشن باشد بی‌درنگ بازسازی می‌شود. */
         @JavascriptInterface
         fun setTunneled(pkg: String, tunneled: Boolean) {
             prefs.setTunneled(pkg, tunneled)
             if (DnsVpnService.isTunnelRunning) DnsVpnService.instance?.restartTunnel()
         }
 
-        /** همهٔ تنظیمات برای همگام‌سازی UI وب‌ویو در شروع برنامه. */
         @JavascriptInterface
         fun getSettings(): String = JSONObject().apply {
             put("srv", prefs.serverId)
@@ -452,12 +501,10 @@ class MainActivity : AppCompatActivity() {
             put("sound", prefs.soundNotify)
             put("race", prefs.raceMode)
             put("backups", JSONArray(prefs.backupIds()))
-            // هشدار «Private DNS» اندروید (الگوی Intra): در حالت strict، پرس‌وجوهای
-            // سیستم از DoT خود اندروید می‌روند و تونل را دور می‌زنند (نشت DNS)
-            // کلید "private_dns_mode" در SDK عمومی نیست و Intra هم رشتهٔ خام می‌خواند
             put("pdns", runCatching {
                 val mode = android.provider.Settings.Global.getString(
-                    contentResolver, "private_dns_mode")
+                    contentResolver, "private_dns_mode"
+                )
                 "strict".equals(mode, ignoreCase = true)
             }.getOrDefault(false))
             val proto = JSONObject()
@@ -465,10 +512,6 @@ class MainActivity : AppCompatActivity() {
             put("proto", proto)
         }.toString()
 
-        /**
-         * ثبت یک تنظیم از سمت UI. کلیدها همان کلیدهای کوتاه UI هستند:
-         * block, sinkhole, ipv6, verify, fallback, autostart, log
-         */
         @JavascriptInterface
         fun setSetting(key: String, value: String) {
             val on = value == "1" || value.equals("true", ignoreCase = true)
@@ -485,14 +528,12 @@ class MainActivity : AppCompatActivity() {
                 "race" -> prefs.raceMode = on
                 else -> return
             }
-            // اگر تونل روشن است، بی‌درنگ اعمال شود (بدون نیاز به قطع/وصل)
             DnsVpnService.instance?.applySettings()
-            // فهرست برنامه‌های مجاز فقط با بازسازی تونل اعمال می‌شود
-            if (key == "split" && DnsVpnService.isTunnelRunning)
+            if (key == "split" && DnsVpnService.isTunnelRunning) {
                 DnsVpnService.instance?.restartTunnel()
+            }
         }
 
-        /** ثبت پروتکل انتخابی برای یک سرور (DOH/DOT/DNS). */
         @JavascriptInterface
         fun setProto(serverId: String, protoId: String) {
             if (prefs.findServer(serverId) == null) return
@@ -500,12 +541,12 @@ class MainActivity : AppCompatActivity() {
             DnsVpnService.instance?.applySettings()
         }
 
-        /** ذخیرهٔ دامنه‌های مسدود دلخواه (هر خط یک دامنه). */
         @JavascriptInterface
         fun setCustomBlocked(text: String): Int {
             val list = text.split('\n', ',', ' ')
-                .map { it.trim().lowercase().removeSuffix(".") }
+                .map { Dns.sanitizeLabel(it.trim().lowercase().removeSuffix(".")) }
                 .filter { it.isNotBlank() }
+                .distinct()
             prefs.setExtraBlockedDomains(list)
             DnsVpnService.instance?.applySettings()
             return list.size
@@ -513,13 +554,14 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun setTheme(theme: String) {
-            // تغییر NightMode اکتیویتی را بازمی‌سازد و باید روی نخ اصلی باشد
-            runOnUiThread { (application as? JbDnsApp)?.applyTheme(theme) }
+            val normalized = when (theme) {
+                "dark", "light", "system" -> theme
+                else -> "system"
+            }
+            prefs.theme = normalized
+            runOnUiThread { (application as? JbDnsApp)?.applyTheme(normalized) }
         }
 
-        // ------------------------------------------------ پل‌های نسخهٔ ۴٫۰
-
-        /** کاتالوگ فهرست‌های مسدودسازی آماده با تعداد دامنه‌ها. */
         @JavascriptInterface
         fun getCatalog(): String = JSONArray().apply {
             for (e in BlocklistCatalog.LISTS) put(JSONObject().apply {
@@ -535,7 +577,6 @@ class MainActivity : AppCompatActivity() {
             DnsVpnService.instance?.applySettings()
         }
 
-        /** قواعد بازنویسی DNS (Cloaking). */
         @JavascriptInterface
         fun getRewrites(): String = JSONArray().apply {
             prefs.rewrites().forEach { (d, ip) ->
@@ -545,11 +586,12 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun setRewrite(domain: String, ip: String, on: Boolean) {
-            prefs.setRewrite(domain, if (on) ip else null)
+            val cleanDomain = Dns.sanitizeLabel(domain.trim().lowercase().removeSuffix("."))
+            if (cleanDomain.isBlank()) return
+            prefs.setRewrite(cleanDomain, if (on) ip.trim() else null)
             DnsVpnService.instance?.applySettings()
         }
 
-        /** تست سلامت داخلی — نتیجه با window.__health هل داده می‌شود (الگوی Intra). */
         @JavascriptInterface
         fun runHealthCheck(): Boolean {
             return try {
@@ -604,7 +646,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        /** آمار ۲۴ ساعت گذشته برای نمودار صفحهٔ لاگ‌ها. */
         @JavascriptInterface
         fun stats24(): String {
             val s = VpnStats.dayStats()
@@ -617,14 +658,12 @@ class MainActivity : AppCompatActivity() {
             }.toString()
         }
 
-        /** گام‌های ویزارد باتری/اجرای خودکار. */
         @JavascriptInterface
         fun getBatterySteps(): String = BatteryWizard.stepsJson()
 
         @JavascriptInterface
         fun openBatteryStep(index: Int): String = BatteryWizard.open(this@MainActivity, index)
 
-        /** خروجی پشتیبان تنظیمات — فایل ساخته و پنجرهٔ اشتراک باز می‌شود. */
         @JavascriptInterface
         fun exportSettings(): String {
             val data = BackupData(
@@ -637,7 +676,8 @@ class MainActivity : AppCompatActivity() {
                     "verify" to prefs.verifyCertificate,
                     "fallback" to prefs.fallbackToPlain,
                     "autostart" to prefs.autoStart,
-                    "sound" to prefs.soundNotify
+                    "sound" to prefs.soundNotify,
+                    "log" to prefs.logQueries
                 ),
                 protos = prefs.allServers()
                     .mapNotNull { s -> prefs.protoFor(s.id)?.let { s.id to it.name } }
@@ -671,25 +711,14 @@ class MainActivity : AppCompatActivity() {
             return file.absolutePath
         }
 
-        /** باز کردن انتخاب‌گر فایل برای بازیابی پشتیبان. */
         @JavascriptInterface
         fun pickBackupFile() {
             runCatching { importFile.launch(arrayOf("*/*")) }
         }
 
-
-        // ------------------------------------------------ گزارش مشکل (v4.1)
-
-        /** خطای استاندارد برای UI گزارش. */
         private fun feedbackError(msg: String): String =
             JSONObject().apply { put("ok", false); put("error", msg) }.toString()
 
-        /**
-         * ارسال گزارش «JB-DNS مشکلی داشت بهمون بگو!» به ورکر کلاودفلر.
-         * ورودی: {text, contact?, diag:boolean, logs:boolean}
-         * نتیجه با window.__feedback به UI هل داده می‌شود.
-         */
-        /** v4.2: ارسال پیام چت پشتیبانی — درخواست UI: {chat,text,contact,diag,logs} */
         @JavascriptInterface
         fun chatSend(json: String): Boolean {
             val o = runCatching { JSONObject(json) }.getOrNull() ?: run {
@@ -702,7 +731,6 @@ class MainActivity : AppCompatActivity() {
             Feedback.validateContact(contact)?.let { pushToJs("__chatSend", feedbackError(it)); return true }
 
             val server = prefs.activeServer()
-            // اطلاعات فنی فقط با رضایت کاربر (تیک «📊 اطلاعات فنی»)
             val diag = if (o.optBoolean("diag", true)) Feedback.Diag(
                 appVersion = BuildConfig.VERSION_NAME,
                 androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
@@ -716,7 +744,6 @@ class MainActivity : AppCompatActivity() {
                 blocked = VpnStats.totalBlocked,
                 lastError = VpnStats.lastError
             ) else null
-            // لاگ‌ها به‌صورت پیش‌فرض خاموش‌اند (دامنه‌ها حساس‌اند)
             val logs = if (o.optBoolean("logs", false))
                 VpnStats.snapshot().take(20)
                     .map { "${it.status.name} · ${it.domain} · ${it.ms}ms · ${it.answer.take(60)}" }
@@ -725,16 +752,12 @@ class MainActivity : AppCompatActivity() {
             val payload = Feedback.buildChatSend(o.optString("chat"), text, contact, diag, logs).toString()
             Thread({
                 try {
-                    val client = OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(15, TimeUnit.SECONDS)
-                        .build()
                     val req = Request.Builder()
                         .url(Feedback.CHAT_SEND)
                         .header("User-Agent", "JB-DNS/${BuildConfig.VERSION_NAME}")
                         .post(payload.toRequestBody("application/json".toMediaType()))
                         .build()
-                    client.newCall(req).execute().use { resp ->
+                    httpClient.newCall(req).execute().use { resp ->
                         val body = resp.body?.string() ?: ""
                         val rr = runCatching { JSONObject(body) }.getOrNull()
                         if (resp.isSuccessful && rr?.optBoolean("ok") == true) {
@@ -742,8 +765,10 @@ class MainActivity : AppCompatActivity() {
                                 put("ok", true); put("id", rr.optString("id")); put("time", rr.optString("time"))
                             }.toString())
                         } else {
-                            pushToJs("__chatSend",
-                                feedbackError(rr?.optString("error") ?: "خطای سرور (HTTP ${resp.code})"))
+                            pushToJs(
+                                "__chatSend",
+                                feedbackError(rr?.optString("error") ?: "خطای سرور (HTTP ${resp.code})")
+                            )
                         }
                     }
                 } catch (e: Exception) {
@@ -753,7 +778,6 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
-        /** v4.2: دریافت پیام‌های جدید چت (poll) — نتیجه با window.__chatPoll به UI هل داده می‌شود. */
         @JavascriptInterface
         fun chatPoll(chat: String, after: String): Boolean {
             if (chat.isBlank()) return false
@@ -762,16 +786,12 @@ class MainActivity : AppCompatActivity() {
                 "&after=" + android.net.Uri.encode(after)
             Thread({
                 try {
-                    val client = OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(15, TimeUnit.SECONDS)
-                        .build()
                     val req = Request.Builder()
                         .url(url)
                         .header("User-Agent", "JB-DNS/${BuildConfig.VERSION_NAME}")
                         .get()
                         .build()
-                    client.newCall(req).execute().use { resp ->
+                    httpClient.newCall(req).execute().use { resp ->
                         val body = resp.body?.string() ?: ""
                         val rr = runCatching { JSONObject(body) }.getOrNull()
                         pushToJs("__chatPoll", rr?.toString() ?: """{"ok":false,"error":"پاسخ سرور نامعتبر"}""")
@@ -783,7 +803,6 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
-        /** سنجش واقعی یک سرور؛ نتیجه با window.__bench به UI هل داده می‌شود. */
         @JavascriptInterface
         fun bench(serverId: String): Boolean {
             val server = prefs.findServer(serverId) ?: return false
@@ -798,11 +817,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        /**
-         * سنجش موازی همهٔ سرورها (الگوی Race در Intra — همه با هم، نه پشت هم).
-         * نتیجهٔ هر سرور جداگانه با window.__bench و پایان کار با window.__benchDone
-         * به UI هل داده می‌شود.
-         */
         @JavascriptInterface
         fun benchAll(): Boolean {
             if (benchingAll) return false
@@ -816,7 +830,6 @@ class MainActivity : AppCompatActivity() {
                         try {
                             benchPool.execute {
                                 try {
-                                    // مهلت کوتاه تا سرورهای مرده نتیجه را عقب نیندازند
                                     val r = Benchmark.run(s, prefs, rounds = 1, timeoutMs = 3_000)
                                     pushToJs("__bench", benchJson(r, s))
                                 } finally {
@@ -827,7 +840,6 @@ class MainActivity : AppCompatActivity() {
                             latch.countDown()
                         }
                     }
-                    // سقف ایمن: حداکثر ۱۸۰ ثانیه
                     latch.await(180, TimeUnit.SECONDS)
                 } finally {
                     benchingAll = false
@@ -838,11 +850,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** اعمال یک پشتیبان روی تنظیمات؛ تعداد موارد اعمال‌شده را برمی‌گرداند. */
+    /**
+     * اعمال یک پشتیبان روی تنظیمات؛ سرورهای سفارشی «پیش از» serverId / protos / backups
+     * بازیابی می‌شوند تا ارجاع به سرورهای سفارشی کاربر از دست نرود!
+     */
     private fun applyBackup(d: BackupData): Int {
         var applied = 0
+        // ۱) ابتدا سرورهای سفارشی ذخیره شوند تا findServer آن‌ها را بشناسد
+        d.customServers.forEach { raw ->
+            Server.decode(raw)?.let { prefs.saveCustomServer(it); applied++ }
+        }
+        // ۲) سرور فعال و پروتکل‌ها و زنجیرهٔ پشتیبان
         d.serverId?.let { if (prefs.findServer(it) != null) { prefs.serverId = it; applied++ } }
-        d.theme?.let { prefs.theme = it; applied++ }
+        for ((sid, pname) in d.protos) {
+            if (prefs.findServer(sid) != null) {
+                prefs.setProtoFor(sid, Proto.fromId(pname)); applied++
+            }
+        }
+        if (d.backups.isNotEmpty()) {
+            prefs.setBackups(d.backups.filter { prefs.findServer(it) != null })
+            applied++
+        }
+        // ۳) پوسته و سوییچ‌ها
+        d.theme?.let {
+            prefs.theme = it
+            runOnUiThread { (application as? JbDnsApp)?.applyTheme(it) }
+            applied++
+        }
         for ((k, v) in d.toggles) {
             when (k) {
                 "block" -> prefs.blockDomains = v
@@ -852,22 +886,12 @@ class MainActivity : AppCompatActivity() {
                 "fallback" -> prefs.fallbackToPlain = v
                 "autostart" -> prefs.autoStart = v
                 "sound" -> prefs.soundNotify = v
+                "log" -> prefs.logQueries = v
                 else -> continue
             }
             applied++
         }
-        for ((sid, pname) in d.protos) {
-            if (prefs.findServer(sid) != null) {
-                prefs.setProtoFor(sid, Proto.fromId(pname)); applied++
-            }
-        }
-        d.customServers.forEach { raw ->
-            Server.decode(raw)?.let { prefs.saveCustomServer(it); applied++ }
-        }
-        if (d.backups.isNotEmpty()) {
-            prefs.setBackups(d.backups.filter { prefs.findServer(it) != null })
-            applied++
-        }
+        // ۴) قواعد دامنه، بازنویسی، کاتالوگ و تونل افتراقی
         if (d.allowed.isNotEmpty()) {
             d.allowed.forEach { prefs.setAllowed(it, true) }
             applied++
@@ -892,13 +916,21 @@ class MainActivity : AppCompatActivity() {
             d.tunneledApps.forEach { prefs.setTunneled(it, true) }
             applied++
         }
-        d.blocklistUrl?.let { prefs.blocklistUrl = it; applied++ }
+        d.blocklistUrl?.let { url ->
+            prefs.blocklistUrl = url
+            applied++
+            if (url.isNotBlank()) {
+                Thread({
+                    val r = RemoteBlocklist.download(applicationContext, url)
+                    if (r.ok) {
+                        prefs.blocklistCount = r.count
+                        prefs.blocklistUpdatedMs = System.currentTimeMillis()
+                        DnsVpnService.instance?.applySettings()
+                    }
+                }, "jb-backup-bl-dl").start()
+            }
+        }
         return applied
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (wv.canGoBack()) wv.goBack() else super.onBackPressed()
     }
 
     override fun onDestroy() {

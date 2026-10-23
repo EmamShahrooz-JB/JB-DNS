@@ -9,6 +9,10 @@ class Prefs(context: Context) {
     private val sp: SharedPreferences =
         context.applicationContext.getSharedPreferences("jb_dns_prefs", Context.MODE_PRIVATE)
 
+    var initialProbed: Boolean
+        get() = sp.getBoolean("initial_probed", false)
+        set(v) = sp.edit().putBoolean("initial_probed", v).apply()
+
     var theme: String
         get() = sp.getString(K_THEME, "system") ?: "system"
         set(v) = sp.edit().putString(K_THEME, v).apply()

@@ -24,9 +24,9 @@ class DnsStub(
     @Volatile var upstream: UpstreamResolver,
     @Volatile var blockList: BlockList? = null,
     @Volatile var blockEnabled: Boolean = true,
-    /** دامنه‌های استثنا: حتی اگر در فهرست مسدودسازی باشند پاسخ می‌گیرند. */
+    /** دامنه‌های استثنا (خود دامنه و همهٔ زیردامنه‌هایش): حتی اگر در فهرست مسدودسازی باشند پاسخ می‌گیرند. */
     @Volatile var allowList: Set<String>? = null,
-    /** بازنویسی DNS (Cloaking — الگوی dnscrypt-proxy): دامنه → IP ثابت. */
+    /** بازنویسی DNS (Cloaking — الگوی dnscrypt-proxy): دامنه → IP ثابت (IPv4 یا IPv6). */
     @Volatile var rewriteMap: Map<String, String>? = null,
     @Volatile var sinkholeEnabled: Boolean = false,
     @Volatile var sinkholeIp: String = "0.0.0.0",
@@ -51,41 +51,42 @@ class DnsStub(
         val q = msg.question
             ?: return result(Dns.buildError(data, len, Dns.RCODE_FORMERR), false, null)
 
-        val name = q.name.lowercase()
+        val name = q.name.lowercase().removeSuffix(".")
         val typeLabel = Dns.typeLabel(q.type)
 
-        // ۱) مسدودسازی IPv6 در صورت درخواست کاربر
+        // ۱) بازنویسی DNS (Cloaking): قاعدهٔ صریح کاربر بالاترین اولویت را دارد
+        // (پشتیبانی از تطبیق دقیق/زیردامنه و هر دو خانوادهٔ IPv4 و IPv6)
+        findRewrite(name)?.let { targetIp ->
+            val isV6Target = targetIp.contains(':')
+            val answer = when {
+                !isV6Target && q.type == Dns.TYPE_A -> Dns.buildSyntheticA(data, len, targetIp)
+                isV6Target && q.type == Dns.TYPE_AAAA -> Dns.buildSyntheticAAAA(data, len, targetIp)
+                else -> Dns.buildError(data, len, Dns.RCODE_NOERROR, authoritative = true)
+            }
+            return result(answer, false, log(name, typeLabel, "بازنویسی ← $targetIp", LogEntry.Status.OK, 0))
+        }
+
+        // ۲) مسدودسازی IPv6 در صورت درخواست کاربر
         if (blockIpv6 && q.type == Dns.TYPE_AAAA) {
             val noData = Dns.buildError(data, len, Dns.RCODE_NOERROR, authoritative = true)
             VpnStats.countBlocked()
             return result(noData, true, log(name, typeLabel, "—", LogEntry.Status.BLOCKED, 0))
         }
 
-        // ۱٫۵) بازنویسی DNS (Cloaking): دامنهٔ شناخته‌شده → IP ثابت،
-        // بدون رفتن به سرور بالادست (پاسخ فوری و آفلاین)
-        rewriteMap?.get(name)?.let { ip ->
-            val answer = if (q.type == Dns.TYPE_A) {
-                Dns.buildSyntheticA(data, len, ip)
-            } else {
-                // برای AAAA و سایر انواع: پاسخ خالی موفق تا کلاینت به سراغ A برود
-                Dns.buildError(data, len, Dns.RCODE_NOERROR, authoritative = true)
-            }
-            return result(answer, false, log(name, typeLabel, "بازنویسی ← $ip", LogEntry.Status.OK, 0))
-        }
-
-        // ۲) فهرست مسدودسازی — دامنه‌های استثنا هرگز مسدود نمی‌شوند
-        if (allowList?.contains(name) != true &&
-            blockEnabled && blockList?.contains(name) == true) {
+        // ۳) فهرست مسدودسازی — دامنه‌های استثنا (و زیردامنه‌هایشان) هرگز مسدود نمی‌شوند
+        if (!BlockList.matchesDomainOrParent(name, allowList) &&
+            blockEnabled && blockList?.contains(name) == true
+        ) {
             VpnStats.countBlocked()
-            val answer = if (sinkholeEnabled && q.type == Dns.TYPE_A) {
-                Dns.buildSyntheticA(data, len, sinkholeIp)
-            } else {
-                Dns.buildError(data, len, Dns.RCODE_NXDOMAIN)
+            val answer = when {
+                sinkholeEnabled && q.type == Dns.TYPE_A -> Dns.buildSyntheticA(data, len, sinkholeIp)
+                sinkholeEnabled && q.type == Dns.TYPE_AAAA -> Dns.buildSyntheticAAAA(data, len, "::")
+                else -> Dns.buildError(data, len, Dns.RCODE_NXDOMAIN)
             }
             return result(answer, true, log(name, typeLabel, "مسدود", LogEntry.Status.BLOCKED, 0))
         }
 
-        // ۳) حافظهٔ نهان
+        // ۴) حافظهٔ نهان
         val ck = cacheKey(name, q.type)
         val hit = synchronized(cache) {
             val e = cache[ck]
@@ -101,7 +102,7 @@ class DnsStub(
             return result(hit, false, log(name, typeLabel, "حافظهٔ نهان", LogEntry.Status.CACHED, 0))
         }
 
-        // ۴) ارسال به سرور بالادست
+        // ۵) ارسال به سرور بالادست
         val startedAt = clock()
         return try {
             val response = upstream.resolve(data.copyOf(len))
@@ -122,6 +123,18 @@ class DnsStub(
             val err = Dns.buildError(data, len, Dns.RCODE_SERVFAIL)
             result(err, false, log(name, typeLabel, "خطا", LogEntry.Status.ERROR, clock() - startedAt))
         }
+    }
+
+    private fun findRewrite(domain: String): String? {
+        val map = rewriteMap ?: return null
+        if (map.isEmpty()) return null
+        map[domain]?.let { return it }
+        var idx = domain.indexOf('.')
+        while (idx >= 0 && idx < domain.length - 1) {
+            map[domain.substring(idx + 1)]?.let { return it }
+            idx = domain.indexOf('.', idx + 1)
+        }
+        return null
     }
 
     private fun summarize(msg: Dns.Message): String {

@@ -148,7 +148,8 @@ async function chatSend(request, env) {
     const cutoff = new Date(Date.now() - TTL_DAYS * 86400 * 1000).toISOString();
     stmts.push(
       env.DB.prepare("DELETE FROM messages WHERE time < ?").bind(cutoff),
-      env.DB.prepare("DELETE FROM chats WHERE last_activity < ?").bind(cutoff)
+      env.DB.prepare("DELETE FROM chats WHERE last_activity < ?").bind(cutoff),
+      env.DB.prepare("DELETE FROM rate_limit WHERE substr(key, -13) < ?").bind(hour)
     );
   }
   await env.DB.batch(stmts);
@@ -355,6 +356,23 @@ function logsOrNull(arr) {
   return JSON.stringify(arr);
 }
 
+async function timingSafeTokenMatch(candidate, secret) {
+  if (!candidate || !secret) return false;
+  const a = await sha256Hex(candidate);
+  const b = await sha256Hex(secret);
+  return constantTimeEqual(a, b);
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const len = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 async function requireAdmin(env, url) {
   const t = url.searchParams.get("t") || "";
   if (!t) return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
@@ -365,10 +383,10 @@ async function requireAdmin(env, url) {
     custom = row ? row.value : null;
   } catch (e) { /* جدول settings هنوز ساخته نشده */ }
   if (custom) {
-    if ((await sha256Hex(t)) === custom) return null;
+    if (constantTimeEqual(await sha256Hex(t), custom)) return null;
     return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
   }
-  if (env.ADMIN_TOKEN && t === env.ADMIN_TOKEN) return null;
+  if (await timingSafeTokenMatch(t, env.ADMIN_TOKEN)) return null;
   return json({ ok: false, error: "دسترسی مدیریتی لازم است" }, 401);
 }
 
@@ -389,13 +407,16 @@ async function adminChangePass(request, env) {
   const rlKey = `pass:${ipHash}:${hour}`;
   const rl = await env.DB.prepare("SELECT count AS c FROM rate_limit WHERE key = ?").bind(rlKey).first();
   if (rl && rl.c >= 5) return json({ ok: false, error: "تلاش‌های زیاد — یک ساعت صبر کن" }, 429);
-  // بررسی کلید فعلی
+  // تضمین وجود جدول settings حتی در پایگاه‌داده‌های قدیمی‌تر
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)").run();
+  // بررسی زمان-ثابت کلید فعلی
   let ok = false;
   try {
     const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_token_hash'").first();
-    ok = row ? (await sha256Hex(current)) === row.value
-             : !!(env.ADMIN_TOKEN && current === env.ADMIN_TOKEN);
-  } catch (e) { ok = !!(env.ADMIN_TOKEN && current === env.ADMIN_TOKEN); }
+    ok = row && row.value
+      ? constantTimeEqual(await sha256Hex(current), row.value)
+      : await timingSafeTokenMatch(current, env.ADMIN_TOKEN);
+  } catch (e) { ok = await timingSafeTokenMatch(current, env.ADMIN_TOKEN); }
   if (!ok) {
     await env.DB.prepare("INSERT INTO rate_limit(key, count) VALUES(?, 1) ON CONFLICT(key) DO UPDATE SET count = count + 1")
       .bind(rlKey).run();

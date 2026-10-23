@@ -1,9 +1,8 @@
 package ir.jbdns.net
 
 import ir.jbdns.core.Dns
-import org.bouncycastle.crypto.macs.Poly1305
-import org.bouncycastle.crypto.modes.ChaCha20Poly1305
 import org.bouncycastle.crypto.engines.XSalsa20Engine
+import org.bouncycastle.crypto.macs.Poly1305
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.bouncycastle.math.ec.rfc7748.X25519
@@ -12,22 +11,13 @@ import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetSocketAddress
+import java.net.Socket
 import java.security.SecureRandom
 
 /**
- * DNSCrypt v2 — پیاده‌سازی کامل پروتکل (RFC پیش‌نویس dnscrypt) بدون کتابخانهٔ بومی.
- *
- * لایه‌ها:
- *  ۱) [DnsStamp] — تجزیهٔ نشانی sdns:// (طرح DNS Stamps)
- *  ۲) کریپتو — X25519 (BouncyCastle)، Ed25519 (BouncyCastle)،
- *     HSalsa20/HChaCha20 (پیاده‌سازی مستقل زیر)، XSalsa20-Poly1305 و
- *     ChaCha20-Poly1305 (IETF) برای ساخت secretbox
- *  ۳) [DnscryptResolver] — واکشی/تأیید گواهی + رمزنگاری پرس‌وجو/پاسخ
- *
- * ساختار پرس‌وجوی مشتری:  <client-magic:8> <client-pk:32> <nonce:24> <encrypted>
- * ساختار پاسخ سرور:      <resolver-magic:8> <nonce:24> <encrypted>
- * هر بخش رمزگذاری‌شده:    <mac:16> <ciphertext>  (قالب secretbox_easy)
- * پدینگ: ISO/IEC 7816-4 (0x80 و سپس صفرها؛ حداقل ۲۵۶ بایت، ضریب ۶۴)
+ * DNSCrypt v2 — پیاده‌سازی کامل پروتکل (RFC پیش‌نویس dnscrypt) بدون کتابخانهٔ بومی،
+ * همراه با کش واقعی گواهی سرور + کلید مشترک پیش‌محاسبه‌شده و بازگشت خودکار به TCP
+ * (برای شبکه‌هایی مثل ISPهای ایران که UDP پورت‌های غیرمتعارف را مسدود یا محدود می‌کنند).
  */
 object DnscryptCrypto {
 
@@ -37,7 +27,6 @@ object DnscryptCrypto {
         nonce24.copyOfRange(16, 24).copyInto(n, 4)
         return n
     }
-
 
     /** ثابت‌های Salsa20 («expand 32-byte k»). */
     private val SIGMA = intArrayOf(
@@ -60,7 +49,6 @@ object DnscryptCrypto {
     /** ۲۰ دور Salsa20 روی state (۱۰ دور دوتایی). */
     private fun salsaRounds(x: IntArray) {
         for (i in 0 until 10) {
-            // ستون‌ها
             x[4] = x[4] xor rotl(x[0] + x[12], 7); x[8] = x[8] xor rotl(x[4] + x[0], 9)
             x[12] = x[12] xor rotl(x[8] + x[4], 13); x[0] = x[0] xor rotl(x[12] + x[8], 18)
             x[9] = x[9] xor rotl(x[5] + x[1], 7); x[13] = x[13] xor rotl(x[9] + x[5], 9)
@@ -69,7 +57,6 @@ object DnscryptCrypto {
             x[6] = x[6] xor rotl(x[2] + x[14], 13); x[10] = x[10] xor rotl(x[6] + x[2], 18)
             x[3] = x[3] xor rotl(x[15] + x[11], 7); x[7] = x[7] xor rotl(x[3] + x[15], 9)
             x[11] = x[11] xor rotl(x[7] + x[3], 13); x[15] = x[15] xor rotl(x[11] + x[7], 18)
-            // ردیف‌ها
             x[1] = x[1] xor rotl(x[0] + x[3], 7); x[2] = x[2] xor rotl(x[1] + x[0], 9)
             x[3] = x[3] xor rotl(x[2] + x[1], 13); x[0] = x[0] xor rotl(x[3] + x[2], 18)
             x[6] = x[6] xor rotl(x[5] + x[4], 7); x[7] = x[7] xor rotl(x[6] + x[5], 9)
@@ -86,9 +73,9 @@ object DnscryptCrypto {
         val x = IntArray(16)
         x[0] = SIGMA[0]; x[5] = SIGMA[1]; x[10] = SIGMA[2]; x[15] = SIGMA[3]
         for (i in 0 until 4) {
-            x[1 + i] = le32(key, i * 4)          // key[0..15]
-            x[11 + i] = le32(key, 16 + i * 4)    // key[16..31]
-            x[6 + i] = le32(in16, i * 4)         // ورودی ۱۶ بایتی
+            x[1 + i] = le32(key, i * 4)
+            x[11 + i] = le32(key, 16 + i * 4)
+            x[6 + i] = le32(in16, i * 4)
         }
         salsaRounds(x)
         val out = ByteArray(32)
@@ -100,7 +87,6 @@ object DnscryptCrypto {
     /** ۲۰ دور ChaCha20 (۱۰ دور دوتایی). */
     private fun chachaRounds(x: IntArray) {
         for (i in 0 until 10) {
-            // QR استاندارد ChaCha: چرخش روی «نتیجهٔ XOR» اعمال می‌شود
             x[0] += x[4]; x[12] = rotl(x[12] xor x[0], 16); x[8] += x[12]; x[4] = rotl(x[4] xor x[8], 12)
             x[0] += x[4]; x[12] = rotl(x[12] xor x[0], 8); x[8] += x[12]; x[4] = rotl(x[4] xor x[8], 7)
             x[1] += x[5]; x[13] = rotl(x[13] xor x[1], 16); x[9] += x[13]; x[5] = rotl(x[5] xor x[9], 12)
@@ -138,9 +124,9 @@ object DnscryptCrypto {
     fun hchacha20(key: ByteArray, in16: ByteArray): ByteArray {
         val x = IntArray(16)
         for (i in 0 until 4) x[i] = SIGMA[i]
-        for (i in 0 until 4) x[4 + i] = le32(key, i * 4)          // key[0..15]
-        for (i in 0 until 4) x[8 + i] = le32(key, 16 + i * 4)     // key[16..31]
-        for (i in 0 until 4) x[12 + i] = le32(in16, i * 4)        // نانس ۱۶ بایتی
+        for (i in 0 until 4) x[4 + i] = le32(key, i * 4)
+        for (i in 0 until 4) x[8 + i] = le32(key, 16 + i * 4)
+        for (i in 0 until 4) x[12 + i] = le32(in16, i * 4)
         chachaRounds(x)
         val out = ByteArray(32)
         for (i in 0 until 4) putLe32(out, i * 4, x[i])
@@ -186,7 +172,6 @@ object DnscryptCrypto {
     fun xchachaSeal(plaintext: ByteArray, key: ByteArray, nonce24: ByteArray): ByteArray {
         val subkey = hchacha20(key, nonce24.copyOfRange(0, 16))
         val nonce12 = xchachaTailNonce(nonce24)
-        // به سبک crypto_secretbox: ۳۲ بایت اول بلوک صفر = کلید Poly1305؛ ۳۲ بایت بعدی رمز ۳۲ بایت اول پیام
         val block0 = chacha20Block(subkey, nonce12, 0)
         val ct = ByteArray(plaintext.size)
         val n = minOf(32, plaintext.size)
@@ -265,12 +250,11 @@ object DnscryptCrypto {
 
 /** نشانی رمزگذاری‌شدهٔ DNS Stamp (طرح sdns:// برای پروتکل DNSCrypt). */
 class DnsStamp(
-    val address: String,          // «ip:port» یا «[ipv6]:port»
-    val providerPk: ByteArray,    // کلید عمومی Ed25519 ارائه‌دهنده (۳۲ بایت)
-    val providerName: String      // نام ارائه‌دهنده برای پرس‌وجوی گواهی
+    val address: String,
+    val providerPk: ByteArray,
+    val providerName: String
 ) {
     companion object {
-        /** تجزیهٔ sdns://AQ…؛ تهی یعنی نشانی معتبر DNSCrypt نبود. */
         fun parse(stamp: String): DnsStamp? {
             val s = stamp.trim()
             if (!s.startsWith("sdns://")) return null
@@ -280,27 +264,9 @@ class DnsStamp(
             } catch (_: Exception) {
                 null
             } ?: return null
-            if (b.size < 11 || b[0] != 0x01.toByte()) return null   // فقط پروتکل DNSCrypt
-            var off = 9                                              // ۱ بایت پروتکل + ۸ بایت props (LE)
-
-            fun lp(): ByteArray? {
-                if (off >= b.size) return null
-                val len = b[off].toInt() and 0xFF
-                if (off + 1 + len > b.size) return null
-                val v = b.copyOfRange(off + 1, off + 1 + len)
-                off += 1 + len
-                return v
-            }
-
-            val addr = lp()?.toString(Charsets.UTF_8) ?: return null
-            val pk = lp() ?: return null
-            if (pk.size != 32) return null
-            val name = lp()?.toString(Charsets.UTF_8) ?: return null
-            if (addr.isEmpty() || name.isEmpty()) return null
-            return DnsStamp(addr, pk, name)
+            return decodeStampBytes(b)
         }
 
-        /** نسخهٔ JVM (تست) — Base64 استاندارد جاوا. */
         fun parseJvm(stamp: String): DnsStamp? {
             val s = stamp.trim()
             if (!s.startsWith("sdns://")) return null
@@ -309,6 +275,10 @@ class DnsStamp(
             } catch (_: Exception) {
                 null
             } ?: return null
+            return decodeStampBytes(b)
+        }
+
+        private fun decodeStampBytes(b: ByteArray): DnsStamp? {
             if (b.size < 11 || b[0] != 0x01.toByte()) return null
             var off = 9
             fun lp(): ByteArray? {
@@ -329,21 +299,25 @@ class DnsStamp(
     }
 }
 
-/** گواهی رمزنگاری سرور. */
+/** گواهی رمزنگاری سرور + کلید مشترک پیش‌محاسبه‌شدهٔ مسیر. */
 class DnscryptCert(
-    val esVersion: Int,          // 1 = XSalsa20-Poly1305، 2 = XChaCha20-Poly1305
-    val resolverPk: ByteArray,   // X25519
-    val clientMagic: ByteArray,  // ۸ بایت
+    val esVersion: Int,
+    val resolverPk: ByteArray,
+    val clientMagic: ByteArray,
     val serial: Int,
-    val tsEnd: Long
+    val tsEnd: Long,
+    val sharedKey: ByteArray
 )
 
 /**
- * ریزالور DNSCrypt روی UDP — الگوی سایر ریزالورها: متدها بلاک‌کننده و thread-safe.
+ * ریزالور DNSCrypt با کش واقعی گواهی سرور و بازگشت خودکار از UDP به TCP
+ * (چه هنگام قطع بودن UDP روی ISP و چه هنگام پاسخ کوتاه‌شدهٔ TC=1).
  */
 class DnscryptResolver(
     stampText: String,
-    private val timeoutMs: Int = 8_000
+    private val timeoutMs: Int = 8_000,
+    private val protectDatagram: (DatagramSocket) -> Unit = {},
+    private val protectSocket: (Socket) -> Unit = {}
 ) : UpstreamResolver {
 
     override val label: String get() = "DNSCrypt"
@@ -353,7 +327,8 @@ class DnscryptResolver(
 
     private val random = SecureRandom()
     private val clientKey = DnscryptCrypto.newX25519KeyPair(random)
-    private var cert: DnscryptCert? = null
+    @Volatile private var cert: DnscryptCert? = null
+    @Volatile private var preferTcp: Boolean = false
 
     private fun hostPort(): Pair<String, Int> {
         val idx = stamp.address.lastIndexOf(':')
@@ -363,36 +338,89 @@ class DnscryptResolver(
         return host to port
     }
 
-    /** واکشی و تأیید گواهی‌های سرور؛ بهترین گواهی معتبر برگردانده می‌شود. */
+    /** ارسال و دریافت یک بستهٔ خام روی UDP یا TCP (با فریم‌بندی ۲ بایتی استاندارد DNSCrypt/TCP). */
+    internal fun exchangePacket(host: String, port: Int, payload: ByteArray, forceTcp: Boolean = false): ByteArray {
+        if (!forceTcp && !preferTcp) {
+            try {
+                return sendUdp(host, port, payload)
+            } catch (_: IOException) {
+                // UDP در بسیاری از شبکه‌ها بسته است؛ بی‌درنگ روی TCP همان پورت امتحان می‌کنیم
+                val tcpReply = sendTcp(host, port, payload)
+                preferTcp = true
+                return tcpReply
+            }
+        }
+        return try {
+            sendTcp(host, port, payload)
+        } catch (e: IOException) {
+            if (!forceTcp) {
+                preferTcp = false
+                sendUdp(host, port, payload)
+            } else throw e
+        }
+    }
+
+    private fun sendUdp(host: String, port: Int, payload: ByteArray): ByteArray {
+        DatagramSocket().use { sock ->
+            runCatching { protectDatagram(sock) }
+            sock.soTimeout = timeoutMs
+            sock.send(DatagramPacket(payload, payload.size, InetSocketAddress(host, port)))
+            val buf = ByteArray(4096)
+            val reply = DatagramPacket(buf, buf.size)
+            sock.receive(reply)
+            return buf.copyOf(reply.length)
+        }
+    }
+
+    private fun sendTcp(host: String, port: Int, payload: ByteArray): ByteArray {
+        Socket().use { sock ->
+            runCatching { protectSocket(sock) }
+            sock.tcpNoDelay = true
+            sock.soTimeout = timeoutMs
+            sock.connect(InetSocketAddress(host, port), timeoutMs)
+            val out = sock.outputStream
+            out.write(byteArrayOf((payload.size shr 8 and 0xFF).toByte(), (payload.size and 0xFF).toByte()))
+            out.write(payload)
+            out.flush()
+            val input = sock.inputStream
+            val hi = input.read()
+            val lo = input.read()
+            if (hi < 0 || lo < 0) throw IOException("DNSCrypt/TCP: اتصال بسته شد")
+            val len = (hi shl 8) or lo
+            if (len < Dns.HEADER_SIZE || len > 65535) throw IOException("DNSCrypt/TCP: طول نامعتبر $len")
+            val buf = ByteArray(len)
+            var off = 0
+            while (off < len) {
+                val n = input.read(buf, off, len - off)
+                if (n < 0) throw IOException("DNSCrypt/TCP: پاسخ ناقص")
+                off += n
+            }
+            return buf
+        }
+    }
+
+    /** واکشی، تأیید امضای Ed25519 و ذخیرهٔ واقعی بهترین گواهی سرور در حافظه! */
     @Synchronized
-    private fun fetchCert(): DnscryptCert {
+    internal fun fetchCert(): DnscryptCert {
+        val nowSec = System.currentTimeMillis() / 1000L
         cert?.let { c ->
-            if (System.currentTimeMillis() / 1000L + 3600 < c.tsEnd) return c
+            if (nowSec + 60 < c.tsEnd) return c
         }
 
         val (host, port) = hostPort()
         val q = Dns.buildQuery(0x5345, stamp.providerName, Dns.TYPE_TXT, qclass = 1)
-        val response = DatagramSocket().use { sock ->
-            sock.soTimeout = timeoutMs
-            sock.send(DatagramPacket(q, q.size, InetSocketAddress(host, port)))
-            val buf = ByteArray(4096)
-            val reply = DatagramPacket(buf, buf.size)
-            sock.receive(reply)
-            buf.copyOf(reply.length)
-        }
+        val response = exchangePacket(host, port, q)
         val msg = runCatching { Dns.parse(response) }.getOrNull()
             ?: throw IOException("DNSCrypt: پاسخ گواهی ناخوانا بود")
 
-        val now = System.currentTimeMillis() / 1000L
         var best: DnscryptCert? = null
         for (answer in msg.answers) {
             if (answer.type != Dns.TYPE_TXT) continue
-            // رکورد TXT در RDATA طول‌دار است: <len><bytes><len><bytes>… — اول باز می‌کنیم
             val rdata = unpackTxt(answer.rdata) ?: continue
             if (rdata.size < 124) continue
             if (rdata[0] != 0x44.toByte() || rdata[1] != 0x4E.toByte() ||
                 rdata[2] != 0x53.toByte() || rdata[3] != 0x43.toByte()
-            ) continue                                    // «DNSC»
+            ) continue
             val esVersion = ((rdata[4].toInt() and 0xFF) shl 8) or (rdata[5].toInt() and 0xFF)
             if (esVersion != 1 && esVersion != 2) continue
             val sig = rdata.copyOfRange(8, 72)
@@ -406,27 +434,36 @@ class DnscryptResolver(
                 ((rdata[118].toLong() and 0xFF) shl 8) or (rdata[119].toLong() and 0xFF)
             val tsEnd = ((rdata[120].toLong() and 0xFF) shl 24) or ((rdata[121].toLong() and 0xFF) shl 16) or
                 ((rdata[122].toLong() and 0xFF) shl 8) or (rdata[123].toLong() and 0xFF)
-            if (now < tsStart || now > tsEnd) continue
-            val c = DnscryptCert(esVersion, resolverPk, clientMagic, serial, tsEnd)
-            if (best == null || c.serial > best!!.serial) best = c
+            if (nowSec < tsStart || nowSec > tsEnd) continue
+            val shared = DnscryptCrypto.x25519Shared(clientKey.first, resolverPk)
+            val derivedKey = if (esVersion == 2) {
+                DnscryptCrypto.hchacha20(shared, ByteArray(16))
+            } else {
+                DnscryptCrypto.hsalsa20(shared, ByteArray(16))
+            }
+            val candidate = DnscryptCert(esVersion, resolverPk, clientMagic, serial, tsEnd, derivedKey)
+            val currentBest = best
+            if (currentBest == null || candidate.serial > currentBest.serial) {
+                best = candidate
+            }
         }
-        return best ?: throw IOException("DNSCrypt: گواهی معتبری از سرور نگرفتیم")
+        val chosen = best ?: throw IOException("DNSCrypt: گواهی معتبری از سرور نگرفتیم")
+        cert = chosen
+        return chosen
     }
 
-    // عمداً synchronized نیست: fetchCert خودش قفل است، سوکت‌ها per-query ساخته
-    // می‌شوند و بقیهٔ متغیرها محلی‌اند — پرس‌وجوها موازی اجرا می‌شوند تا
-    // بارگذاری صفحات با چند دامنه پشت هم صف نشود.
     override fun resolve(query: ByteArray): ByteArray {
         val c = fetchCert()
-        val shared = DnscryptCrypto.x25519Shared(clientKey.first, c.resolverPk)
-        val key = if (c.esVersion == 2) {
-            DnscryptCrypto.hchacha20(shared, ByteArray(16))
-        } else {
-            DnscryptCrypto.hsalsa20(shared, ByteArray(16))
+        val dns = sendEncryptedQuery(c, query, forceTcp = false)
+        // اگر پاسخ روی UDP کوتاه شده بود (TC=1)، طبق مشخصات DNSCrypt v2 روی TCP تکرار می‌شود
+        if (!preferTcp && runCatching { Dns.parse(dns).isTruncated }.getOrDefault(false)) {
+            return runCatching { sendEncryptedQuery(c, query, forceTcp = true) }.getOrDefault(dns)
         }
+        return dns
+    }
 
-        // پدینگ ISO/IEC 7816-4 — کل بستهٔ نهایی حداقل ۵۱۲ بایت و ضریب ۶۴
-        // سربار ثابت: magic(8) + clientPk(32) + نصف نانس(12) + MAC(16) = ۶۸ بایت
+    private fun sendEncryptedQuery(c: DnscryptCert, query: ByteArray, forceTcp: Boolean): ByteArray {
+        val key = c.sharedKey
         val queryOverhead = 8 + 32 + 12 + 16
         var totalLen = maxOf(512, queryOverhead + query.size)
         totalLen = (totalLen + 1 + 63) / 64 * 64
@@ -437,7 +474,6 @@ class DnscryptResolver(
         System.arraycopy(query, 0, padded, 0, query.size)
         padded[query.size] = 0x80.toByte()
 
-        // نانس: ۱۲ بایت تصادفی + ۱۲ صفر
         val nonce = ByteArray(24)
         val half = ByteArray(12)
         random.nextBytes(half)
@@ -449,27 +485,17 @@ class DnscryptResolver(
             DnscryptCrypto.secretboxSeal(padded, key, nonce)
         }
 
-        // بستهٔ کامل: clientMagic + clientPk + «نصف اول» نانس + encrypted
-        // (نیمهٔ دوم نانس روی شبکه ارسال نمی‌شود؛ همیشه صفر است)
         val packet = ByteArray(8 + 32 + 12 + encrypted.size)
         System.arraycopy(c.clientMagic, 0, packet, 0, 8)
         System.arraycopy(clientKey.second, 0, packet, 8, 32)
         System.arraycopy(nonce, 0, packet, 40, 12)
         System.arraycopy(encrypted, 0, packet, 52, encrypted.size)
 
-        // ارسال و دریافت
         val (host, port) = hostPort()
         val response = try {
-            DatagramSocket().use { sock ->
-                sock.soTimeout = timeoutMs
-                sock.send(DatagramPacket(packet, packet.size, InetSocketAddress(host, port)))
-                val buf = ByteArray(4096)
-                val reply = DatagramPacket(buf, buf.size)
-                sock.receive(reply)
-                buf.copyOf(reply.length)
-            }
+            exchangePacket(host, port, packet, forceTcp = forceTcp)
         } catch (e: IOException) {
-            cert = null            // گواهی ممکن است عوض شده باشد؛ دفعهٔ بعد دوباره
+            cert = null
             throw e
         }
 
@@ -477,7 +503,6 @@ class DnscryptResolver(
         for (i in 0 until 8) {
             if (response[i] != RESOLVER_MAGIC[i]) throw IOException("DNSCrypt: پاسخ ناهمخوان")
         }
-        // نانس پاسخ: ۱۲ بایت اول باید همان نیمهٔ مشتری باشد
         for (i in 0 until 12) {
             if (response[8 + i] != nonce[i]) throw IOException("DNSCrypt: نانس پاسخ نامعتبر")
         }
@@ -489,7 +514,6 @@ class DnscryptResolver(
             DnscryptCrypto.secretboxOpen(boxed, key, respNonce)
         }) ?: throw IOException("DNSCrypt: تأیید MAC پاسخ ناموفق")
 
-        // حذف پدینگ ISO/IEC 7816-4 از انتها (آخرین بایت غیرصفر باید 0x80 باشد)
         var end = plain.size
         while (end > 0 && plain[end - 1].toInt() == 0) end--
         if (end == 0 || plain[end - 1] != 0x80.toByte()) throw IOException("DNSCrypt: پدینگ نامعتبر")
@@ -500,16 +524,14 @@ class DnscryptResolver(
 
     @Synchronized
     override fun close() {
-        // منابع پایداری برای بستن نداریم (سوکت‌ها per-query هستند)
+        cert = null
     }
 
     companion object {
-        /** 0x72 0x36 0x66 0x6e 0x76 0x57 0x6a 0x38 */
         private val RESOLVER_MAGIC = byteArrayOf(
             0x72, 0x36, 0x66, 0x6e, 0x76, 0x57, 0x6a, 0x38
         )
 
-        /** چسباندن رشته‌های طول‌دارِ رکورد TXT؛ تهی یعنی RDATA خراب بود. */
         internal fun unpackTxt(rdata: ByteArray): ByteArray? {
             val out = java.io.ByteArrayOutputStream()
             var i = 0

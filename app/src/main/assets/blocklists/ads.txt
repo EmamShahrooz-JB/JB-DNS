@@ -304,7 +304,7 @@ adminder.com
 adminshop.com
 admized.com
 admob.com
-admob.comadwhirl.com
+adwhirl.com
 admobile.com
 admonitor.com
 admotion.com.ar
@@ -905,7 +905,6 @@ adviva.com
 adviva.net
 advnt.com
 adwareremovergold.com
-adwhirl.com
 adwitserver.com
 adworldnetwork.com
 adworx.at
@@ -1273,7 +1272,6 @@ clickcompare.co.uk
 clickdensity.com
 clickedyclick.com
 clickhereforcellphones.com
-clickhouse.com
 clickhype.com
 clicklink.jp
 clickmedia.ro
@@ -2082,7 +2080,6 @@ pheedo.com
 phizzle.com
 phluant.com
 phoenix-adrunner.mycomputer.com
-phonearena.com
 phpadsnew.new.natuurpark.nl
 phpmyvisites.net
 phunware.com
